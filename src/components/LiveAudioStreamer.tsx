@@ -106,7 +106,26 @@ export default function LiveAudioStreamer() {
                     const data = await res.json();
                     if (data.transcript && data.transcript.trim()) {
                         if (data.user_id) userIdRef.current = data.user_id;
-                        setConversation((prev) => [...prev, { transcript: data.transcript, response: data.response }]);
+                        // Add new entry with empty response, then stream characters in
+                        setConversation((prev) => [...prev, { transcript: data.transcript, response: "" }]);
+                        if (data.response) {
+                            const full = String(data.response);
+                            let i = 0;
+                            const step = Math.max(1, Math.floor(full.length / 200));
+                            const interval = setInterval(() => {
+                                i += step;
+                                setConversation((prev) => {
+                                    if (prev.length === 0) return prev;
+                                    const last = prev[prev.length - 1];
+                                    const updated: ConversationEntry = {
+                                        ...last,
+                                        response: full.slice(0, Math.min(i, full.length)),
+                                    };
+                                    return [...prev.slice(0, -1), updated];
+                                });
+                                if (i >= full.length) clearInterval(interval);
+                            }, 20);
+                        }
                         if (data.audio) { setAgentState("speaking"); await playBase64Audio(data.audio); }
                     }
                 } catch (err) {
