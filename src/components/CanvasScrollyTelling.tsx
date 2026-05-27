@@ -8,7 +8,7 @@ export default function CanvasScrollyTelling() {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    // Total frames in the sequence-1 folder based on our inspection
+    // Total frames in the sequence-1 folder
     const totalFrames = 120;
     const { images, loaded } = useImagePreloader(totalFrames, "/sequence-1");
 
@@ -50,7 +50,8 @@ export default function CanvasScrollyTelling() {
             ctx.clearRect(0, 0, cw, ch);
             ctx.drawImage(img, x, y, iw * scale, ih * scale);
 
-            ctx.fillStyle = "rgba(0,0,0,0.6)";
+            // Light warm overlay instead of dark
+            ctx.fillStyle = "rgba(255, 253, 245, 0.25)";
             ctx.fillRect(0, 0, cw, ch);
         }
     }, [loaded, images]);
@@ -90,14 +91,14 @@ export default function CanvasScrollyTelling() {
     const text3Y = useTransform(scrollYProgress, [0.7, 1], [100, -100]);
 
     return (
-        <section ref={containerRef} className="relative h-[400vh] w-full bg-[#050505]">
+        <section ref={containerRef} className="relative h-[400vh] w-full bg-[#FFFDF5]">
             <div className="sticky top-0 h-screen w-full overflow-hidden">
 
                 {!loaded && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-[#050505] z-10">
+                    <div className="absolute inset-0 flex items-center justify-center bg-[#FFFDF5] z-10">
                         <div className="flex flex-col items-center gap-4">
-                            <div className="w-12 h-12 border-t-2 border-brand-purple rounded-full animate-spin"></div>
-                            <p className="text-zinc-500 tracking-widest text-sm uppercase">Loading Sequence...</p>
+                            <div className="w-12 h-12 border-t-2 border-[#C8923C] rounded-full animate-spin"></div>
+                            <p className="text-[#B8A080] tracking-widest text-sm uppercase">Loading Sequence...</p>
                         </div>
                     </div>
                 )}
@@ -112,10 +113,10 @@ export default function CanvasScrollyTelling() {
                         style={{ opacity: text1Opacity, y: text1Y }}
                         className="absolute text-center px-4"
                     >
-                        <h2 className="text-3xl md:text-6xl font-bold tracking-[0.2em] mb-4 uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-400">
+                        <h2 className="text-3xl md:text-6xl font-bold tracking-[0.2em] mb-4 uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-[#FFF5DC]">
                             Zero Latency.<br />Natural Tone.
                         </h2>
-                        <p className="text-zinc-400 tracking-widest max-w-xl mx-auto text-sm md:text-base">
+                        <p className="text-white/80 tracking-widest max-w-xl mx-auto text-sm md:text-base">
                             AN AUDITORY EXPERIENCE METICULOUSLY CRAFTED TO BEND THE BOUNDARIES OF HUMAN AND MACHINE INTERACTION.
                         </p>
                     </motion.div>
@@ -124,10 +125,10 @@ export default function CanvasScrollyTelling() {
                         style={{ opacity: text2Opacity, y: text2Y }}
                         className="absolute text-center px-4"
                     >
-                        <h2 className="text-3xl md:text-6xl font-bold tracking-[0.2em] mb-4 uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand-purple to-white">
+                        <h2 className="text-3xl md:text-6xl font-bold tracking-[0.2em] mb-4 uppercase text-transparent bg-clip-text bg-gradient-to-r from-[#F5DCA0] to-white">
                             Adaptive<br />Intelligence
                         </h2>
-                        <p className="text-zinc-400 tracking-widest max-w-xl mx-auto text-sm md:text-base">
+                        <p className="text-white/80 tracking-widest max-w-xl mx-auto text-sm md:text-base">
                             UPLOAD YOUR CONTEXT. LET THE LLM ADAPT DYNAMICALLY, RESPONDING PRECISELY WHEN YOU NEED IT.
                         </p>
                     </motion.div>
@@ -139,7 +140,7 @@ export default function CanvasScrollyTelling() {
                         <h2 className="text-3xl md:text-6xl font-bold tracking-[0.2em] mb-4 uppercase text-white">
                             Hyper-Realistic<br />Immersion
                         </h2>
-                        <p className="text-zinc-400 tracking-widest max-w-xl mx-auto text-sm md:text-base">
+                        <p className="text-white/80 tracking-widest max-w-xl mx-auto text-sm md:text-base">
                             SEAMLESS CONVERSATIONAL FLOW WITH NO AWKWARD PAUSES ALONG THE WAY.
                         </p>
                     </motion.div>

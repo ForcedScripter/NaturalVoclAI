@@ -14,8 +14,8 @@ const specs = [
 
 export default function ProductPage() {
     return (
-        <main className="min-h-screen bg-[#050505] text-white pt-32 pb-24 px-4">
-            <div className="fixed top-0 left-1/4 w-[50vw] h-[50vw] bg-brand-purple/5 rounded-full blur-[200px] pointer-events-none" />
+        <main className="min-h-screen bg-[#FFFDF5] text-[#3D2E1A] pt-32 pb-24 px-4">
+            <div className="fixed top-0 left-1/4 w-[50vw] h-[50vw] bg-brand-gold/5 rounded-full blur-[200px] pointer-events-none" />
 
             <div className="relative z-10 max-w-5xl mx-auto">
                 {/* Hero */}
@@ -25,14 +25,14 @@ export default function ProductPage() {
                     transition={{ duration: 0.8 }}
                     className="text-center mb-20"
                 >
-                    <p className="text-brand-purple text-xs tracking-[0.3em] uppercase mb-4">The Product</p>
+                    <p className="text-brand-gold text-xs tracking-[0.3em] uppercase mb-4">The Product</p>
                     <h1 className="text-4xl md:text-6xl font-light tracking-[0.2em] uppercase mb-6">
                         A U R A{" "}
-                        <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-purple to-violet-400">
+                        <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-gold to-[#DEB664]">
                             Agent
                         </span>
                     </h1>
-                    <p className="text-zinc-500 tracking-widest text-sm max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-[#8B7355] tracking-widest text-sm max-w-2xl mx-auto leading-relaxed">
                         An AI-powered voice agent that understands context, speaks naturally, and adapts to your business knowledge in real time.
                     </p>
                 </motion.div>
@@ -42,17 +42,17 @@ export default function ProductPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2, duration: 0.6 }}
-                    className="mb-24 bg-white/[0.02] border border-white/[0.06] rounded-3xl p-8 md:p-12"
+                    className="mb-24 bg-[#C8923C]/[0.03] border border-[#C8923C]/10 rounded-3xl p-8 md:p-12"
                 >
-                    <h2 className="text-lg tracking-[0.2em] text-zinc-300 uppercase mb-6">How It Works</h2>
+                    <h2 className="text-lg tracking-[0.2em] text-[#3D2E1A] uppercase mb-6">How It Works</h2>
                     <div className="flex flex-col md:flex-row gap-6 md:gap-0 items-center justify-between">
                         {["Upload PDF Context", "Speak Into Mic", "AI Processes via RAG", "Hear TTS Response"].map((step, i) => (
                             <div key={step} className="flex items-center gap-4">
                                 <div className="flex flex-col items-center text-center">
-                                    <div className="w-12 h-12 rounded-full bg-brand-purple/10 border border-brand-purple/30 flex items-center justify-center text-brand-purple font-bold text-sm mb-3">
+                                    <div className="w-12 h-12 rounded-full bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold font-bold text-sm mb-3">
                                         {i + 1}
                                     </div>
-                                    <p className="text-xs tracking-widest text-zinc-400 max-w-[120px]">{step.toUpperCase()}</p>
+                                    <p className="text-xs tracking-widest text-[#8B7355] max-w-[120px]">{step.toUpperCase()}</p>
                                 </div>
                                 {i < 3 && <div className="hidden md:block w-16 h-px bg-white/10" />}
                             </div>
@@ -68,11 +68,11 @@ export default function ProductPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 + i * 0.08, duration: 0.5 }}
-                            className="group bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 hover:border-brand-purple/30 hover:bg-brand-purple/[0.03] transition-all duration-300"
+                            className="group bg-[#C8923C]/[0.03] border border-[#C8923C]/10 rounded-2xl p-6 hover:border-brand-gold/30 hover:bg-brand-gold/[0.03] transition-all duration-300"
                         >
-                            <div className="text-brand-purple mb-4 group-hover:scale-110 transition-transform duration-300">{spec.icon}</div>
-                            <h3 className="text-sm tracking-[0.15em] text-white mb-2">{spec.title.toUpperCase()}</h3>
-                            <p className="text-xs tracking-wider text-zinc-500 leading-relaxed">{spec.desc}</p>
+                            <div className="text-brand-gold mb-4 group-hover:scale-110 transition-transform duration-300">{spec.icon}</div>
+                            <h3 className="text-sm tracking-[0.15em] text-[#3D2E1A] mb-2">{spec.title.toUpperCase()}</h3>
+                            <p className="text-xs tracking-wider text-[#8B7355] leading-relaxed">{spec.desc}</p>
                         </motion.div>
                     ))}
                 </div>

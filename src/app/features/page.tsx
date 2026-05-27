@@ -40,8 +40,8 @@ const plans: PlanTier[] = [
         description: "Unlock advanced features for power users.",
         icon: <Zap className="w-6 h-6" />,
         highlight: true,
-        gradient: "from-brand-purple to-violet-400",
-        borderColor: "border-brand-purple/50",
+        gradient: "from-brand-gold to-[#DEB664]",
+        borderColor: "border-brand-gold/50",
         features: [
             "Unlimited voice interactions",
             "Advanced RAG (10 documents)",
@@ -91,7 +91,7 @@ function PlanCard({ plan, index }: { plan: PlanTier; index: number }) {
                     scale: isHovered ? 1.03 : 1,
                 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className={`relative flex flex-col h-full rounded-3xl border ${plan.borderColor} bg-black/60 backdrop-blur-sm overflow-hidden transition-shadow duration-500 ${plan.highlight
+                className={`relative flex flex-col h-full rounded-3xl border ${plan.borderColor} bg-[#FFFDF5]/60 backdrop-blur-sm overflow-hidden transition-shadow duration-500 ${plan.highlight
                     ? "shadow-[0_0_60px_-10px_rgba(108,43,217,0.3)]"
                     : "shadow-lg"
                     } ${isHovered ? (plan.highlight ? "shadow-[0_0_80px_-5px_rgba(108,43,217,0.5)]" : "shadow-[0_0_40px_-10px_rgba(255,255,255,0.1)]") : ""}`}
@@ -99,7 +99,7 @@ function PlanCard({ plan, index }: { plan: PlanTier; index: number }) {
             >
                 {/* Popular badge */}
                 {plan.highlight && (
-                    <div className="absolute top-0 right-0 bg-brand-purple text-white text-[10px] tracking-[0.2em] uppercase px-4 py-1.5 rounded-bl-2xl font-medium">
+                    <div className="absolute top-0 right-0 bg-brand-gold text-[#3D2E1A] text-[10px] tracking-[0.2em] uppercase px-4 py-1.5 rounded-bl-2xl font-medium">
                         Most Popular
                     </div>
                 )}
@@ -110,10 +110,10 @@ function PlanCard({ plan, index }: { plan: PlanTier; index: number }) {
                 <div className="p-8 flex flex-col flex-grow">
                     {/* Icon & name */}
                     <div className="flex items-center gap-3 mb-4">
-                        <div className={`p-2.5 rounded-xl bg-gradient-to-br ${plan.gradient} text-white`}>
+                        <div className={`p-2.5 rounded-xl bg-gradient-to-br ${plan.gradient} text-[#3D2E1A]`}>
                             {plan.icon}
                         </div>
-                        <h3 className="text-xl text-white font-medium tracking-wider">{plan.name}</h3>
+                        <h3 className="text-xl text-[#3D2E1A] font-medium tracking-wider">{plan.name}</h3>
                     </div>
 
                     {/* Price */}
@@ -121,10 +121,10 @@ function PlanCard({ plan, index }: { plan: PlanTier; index: number }) {
                         <span className={`text-4xl font-bold bg-gradient-to-r ${plan.gradient} bg-clip-text text-transparent`}>
                             {plan.price}
                         </span>
-                        <span className="text-zinc-500 text-sm tracking-wider ml-1">{plan.period}</span>
+                        <span className="text-[#8B7355] text-sm tracking-wider ml-1">{plan.period}</span>
                     </div>
 
-                    <p className="text-zinc-500 text-sm tracking-wider leading-relaxed mb-8">{plan.description}</p>
+                    <p className="text-[#8B7355] text-sm tracking-wider leading-relaxed mb-8">{plan.description}</p>
 
                     {/* Features */}
                     <ul className="space-y-3 flex-grow mb-8">
@@ -134,7 +134,7 @@ function PlanCard({ plan, index }: { plan: PlanTier; index: number }) {
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.15 + i * 0.05 + 0.3 }}
-                                className="flex items-start gap-3 text-sm text-zinc-300"
+                                className="flex items-start gap-3 text-sm text-[#3D2E1A]"
                             >
                                 <Check className={`w-4 h-4 mt-0.5 shrink-0 bg-gradient-to-r ${plan.gradient} bg-clip-text`} style={{ color: plan.highlight ? "#6c2bd9" : "#71717a" }} />
                                 <span>{feature}</span>
@@ -147,8 +147,8 @@ function PlanCard({ plan, index }: { plan: PlanTier; index: number }) {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className={`w-full py-3.5 rounded-xl text-sm tracking-[0.2em] uppercase font-medium transition-all duration-300 ${plan.highlight
-                            ? "bg-brand-purple text-white hover:bg-brand-purple/90 shadow-lg shadow-brand-purple/20"
-                            : "bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20"
+                            ? "bg-brand-gold text-[#3D2E1A] hover:bg-brand-gold/90 shadow-lg shadow-brand-gold/20"
+                            : "bg-white/5 border border-white/10 text-[#3D2E1A] hover:bg-white/10 hover:border-white/20"
                             }`}
                     >
                         {plan.price === "$0" ? "Get Started Free" : "Subscribe Now"}
@@ -175,10 +175,10 @@ function PlanCard({ plan, index }: { plan: PlanTier; index: number }) {
 
 export default function FeaturesPage() {
     return (
-        <main className="min-h-screen bg-[#050505] text-white pt-32 pb-24 px-4 overflow-hidden">
+        <main className="min-h-screen bg-[#FFFDF5] text-[#3D2E1A] pt-32 pb-24 px-4 overflow-hidden">
             {/* Background ambient glows */}
-            <div className="fixed top-0 left-1/4 w-[50vw] h-[50vw] bg-brand-purple/5 rounded-full blur-[200px] pointer-events-none" />
-            <div className="fixed bottom-0 right-1/4 w-[40vw] h-[40vw] bg-violet-500/5 rounded-full blur-[180px] pointer-events-none" />
+            <div className="fixed top-0 left-1/4 w-[50vw] h-[50vw] bg-brand-gold/5 rounded-full blur-[200px] pointer-events-none" />
+            <div className="fixed bottom-0 right-1/4 w-[40vw] h-[40vw] bg-[#DEB664]/5 rounded-full blur-[180px] pointer-events-none" />
 
             <div className="relative z-10 max-w-6xl mx-auto">
                 {/* Hero */}
@@ -190,11 +190,11 @@ export default function FeaturesPage() {
                 >
                     <h1 className="text-4xl md:text-6xl font-light tracking-[0.2em] uppercase mb-4">
                         Choose Your{" "}
-                        <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-purple to-violet-400">
+                        <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-gold to-[#DEB664]">
                             Plan
                         </span>
                     </h1>
-                    <p className="text-zinc-500 tracking-widest text-sm md:text-base max-w-2xl mx-auto leading-relaxed uppercase">
+                    <p className="text-[#8B7355] tracking-widest text-sm md:text-base max-w-2xl mx-auto leading-relaxed uppercase">
                         Scale your AI voice agent from personal use to enterprise deployment.
                     </p>
                 </motion.div>
@@ -213,7 +213,7 @@ export default function FeaturesPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1, duration: 0.8 }}
-                    className="text-center text-zinc-600 text-xs tracking-[0.2em] uppercase mt-16"
+                    className="text-center text-[#B8A080] text-xs tracking-[0.2em] uppercase mt-16"
                 >
                     All plans include end-to-end encryption • Cancel anytime • No hidden fees
                 </motion.p>

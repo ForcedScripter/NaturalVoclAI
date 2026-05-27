@@ -3,10 +3,12 @@
 import { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-// Audio waveform canvas background
+// Audio waveform canvas background — recolored to golden
+// Uses IntersectionObserver to pause when off-screen (saves CPU)
 function WaveformCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animRef = useRef<number>(0);
+    const isVisibleRef = useRef(false);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -29,11 +31,13 @@ function WaveformCanvas() {
         const barSpacing = 2;
 
         const draw = (time: number) => {
+            if (!isVisibleRef.current) return; // Skip drawing when off-screen
+
             const cw = w();
             const ch = h();
             ctx.clearRect(0, 0, cw, ch);
 
-            const barWidth = (cw - (barCount - 1) * barSpacing) / barCount;
+            const barWidth = Math.max(0, (cw - (barCount - 1) * barSpacing) / barCount);
             const centerY = ch * 0.5;
 
             for (let i = 0; i < barCount; i++) {
@@ -49,15 +53,15 @@ function WaveformCanvas() {
                 const amplitude = (amp1 + amp2 + amp3 + amp4);
                 const barH = Math.abs(amplitude) * ch * 0.35 + 2;
 
-                // Gradient from brand purple to deep violet
-                const hue = 270 + i * 0.5;
-                const lightness = 25 + Math.abs(amplitude) * 30;
+                // Golden/amber hues instead of purple
+                const hue = 35 + i * 0.5;
+                const lightness = 40 + Math.abs(amplitude) * 25;
                 const alpha = 0.3 + Math.abs(amplitude) * 0.5;
 
                 ctx.fillStyle = `hsla(${hue}, 70%, ${lightness}%, ${alpha})`;
 
                 // Draw symmetric bars from center
-                const radius = Math.min(barWidth / 2, 3);
+                const radius = Math.max(0, Math.min(barWidth / 2, 3));
                 const yTop = centerY - barH;
                 const yBot = centerY;
 
@@ -75,9 +79,25 @@ function WaveformCanvas() {
             animRef.current = requestAnimationFrame(draw);
         };
 
-        animRef.current = requestAnimationFrame(draw);
+        // Only run the animation loop when the canvas is visible
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                isVisibleRef.current = entry.isIntersecting;
+                if (entry.isIntersecting) {
+                    // Resume animation when scrolled into view
+                    animRef.current = requestAnimationFrame(draw);
+                } else {
+                    // Stop animation when scrolled out of view
+                    cancelAnimationFrame(animRef.current);
+                }
+            },
+            { threshold: 0 }
+        );
+        observer.observe(canvas);
+
         return () => {
             cancelAnimationFrame(animRef.current);
+            observer.disconnect();
             window.removeEventListener("resize", resize);
         };
     }, []);
@@ -119,9 +139,9 @@ export default function Footer() {
     const [currentYear] = useState(new Date().getFullYear());
 
     return (
-        <footer className="relative w-full bg-[#050505] overflow-hidden">
+        <footer className="relative w-full bg-[#FFFDF5] overflow-hidden">
             {/* Divider line */}
-            <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-600/30 to-transparent" />
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-[#C8923C]/30 to-transparent" />
 
             {/* Waveform background */}
             <div className="relative">
@@ -143,7 +163,7 @@ export default function Footer() {
                             {[...Array(5)].map((_, i) => (
                                 <motion.div
                                     key={i}
-                                    className="w-[3px] rounded-full bg-gradient-to-t from-purple-600 to-purple-400"
+                                    className="w-[3px] rounded-full bg-gradient-to-t from-[#C8923C] to-[#DEB664]"
                                     animate={{
                                         height: [8, 20 + i * 6, 8],
                                     }}
@@ -158,7 +178,7 @@ export default function Footer() {
                             <div className="mx-3">
                                 <svg
                                     viewBox="0 0 24 24"
-                                    className="w-8 h-8 text-purple-400"
+                                    className="w-8 h-8 text-[#C8923C]"
                                     fill="none"
                                     stroke="currentColor"
                                     strokeWidth={1.5}
@@ -173,7 +193,7 @@ export default function Footer() {
                             {[...Array(5)].map((_, i) => (
                                 <motion.div
                                     key={`r-${i}`}
-                                    className="w-[3px] rounded-full bg-gradient-to-t from-purple-600 to-purple-400"
+                                    className="w-[3px] rounded-full bg-gradient-to-t from-[#C8923C] to-[#DEB664]"
                                     animate={{
                                         height: [8, 20 + (4 - i) * 6, 8],
                                     }}
@@ -187,10 +207,10 @@ export default function Footer() {
                             ))}
                         </div>
 
-                        <h2 className="text-3xl md:text-5xl font-light tracking-[0.25em] text-white uppercase mb-4">
+                        <h2 className="text-3xl md:text-5xl font-light tracking-[0.25em] text-[#3D2E1A] uppercase mb-4">
                             MINISTROS
                         </h2>
-                        <p className="text-zinc-500 tracking-[0.15em] text-xs md:text-sm max-w-lg mx-auto leading-relaxed uppercase">
+                        <p className="text-[#8B7355] tracking-[0.15em] text-xs md:text-sm max-w-lg mx-auto leading-relaxed uppercase">
                             Voice-First AI Customer Service — Speak, Listen, Resolve
                         </p>
                     </motion.div>
@@ -199,7 +219,7 @@ export default function Footer() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-16 max-w-2xl mx-auto">
                         {footerLinks.map((group) => (
                             <div key={group.title}>
-                                <h4 className="text-[10px] tracking-[0.3em] text-purple-400 uppercase mb-4 font-medium">
+                                <h4 className="text-[10px] tracking-[0.3em] text-[#C8923C] uppercase mb-4 font-medium">
                                     {group.title}
                                 </h4>
                                 <ul className="space-y-2.5">
@@ -207,7 +227,7 @@ export default function Footer() {
                                         <li key={link.label}>
                                             <a
                                                 href={link.href}
-                                                className="text-zinc-500 hover:text-white text-sm tracking-wider transition-colors duration-300"
+                                                className="text-[#8B7355] hover:text-[#3D2E1A] text-sm tracking-wider transition-colors duration-300"
                                                 target={link.href.startsWith("http") ? "_blank" : undefined}
                                                 rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
                                             >
@@ -221,8 +241,8 @@ export default function Footer() {
                     </div>
 
                     {/* Bottom bar */}
-                    <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <p className="text-zinc-600 text-[11px] tracking-[0.2em] uppercase">
+                    <div className="border-t border-[#C8923C]/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <p className="text-[#B8A080] text-[11px] tracking-[0.2em] uppercase">
                             © {currentYear} Ministros AI · All rights reserved
                         </p>
                         <div className="flex items-center gap-4">
@@ -231,7 +251,7 @@ export default function Footer() {
                                 {[...Array(4)].map((_, i) => (
                                     <motion.div
                                         key={i}
-                                        className="w-[2px] bg-purple-600/40 rounded-full"
+                                        className="w-[2px] bg-[#C8923C]/40 rounded-full"
                                         animate={{ height: [3, 8 + i * 2, 3] }}
                                         transition={{
                                             duration: 0.8 + i * 0.2,
@@ -241,7 +261,7 @@ export default function Footer() {
                                     />
                                 ))}
                             </div>
-                            <p className="text-zinc-700 text-[10px] tracking-[0.15em]">
+                            <p className="text-[#B8A080] text-[10px] tracking-[0.15em]">
                                 POWERED BY VOICE
                             </p>
                         </div>

@@ -1,216 +1,187 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Mic, Square, Loader2, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useVoiceAgent, type AgentStatus } from "@/hooks/useVoiceAgent";
 
-type AgentState = "idle" | "connecting" | "listening" | "processing" | "speaking";
-
-interface ConversationEntry {
-    transcript: string;
-    response: string;
-}
+// ─── Voice Model Lists ────────────────────────────────────
 
 const MALE_VOICES = ["Shubh", "Aditya", "Rahul", "Rohan", "Amit", "Dev", "Ratan", "Varun", "Manan", "Sumit", "Kabir"];
 const FEMALE_VOICES = ["Kavya", "Ritu", "Priya", "Neha", "Pooja", "Simran", "Ishita", "Shreya", "Roopa", "Amelia", "Sophia"];
 
-export default function LiveAudioStreamer() {
-    const [agentState, setAgentState] = useState<AgentState>("idle");
-    const [conversation, setConversation] = useState<ConversationEntry[]>([]);
-    const [error, setError] = useState<string | null>(null);
-    const [waveformHeights, setWaveformHeights] = useState<number[]>(Array(12).fill(10));
+// Map hook status → display state for the UI
+type DisplayState = "idle" | "connecting" | "listening" | "processing" | "speaking";
+function toDisplayState(status: AgentStatus): DisplayState {
+    switch (status) {
+        case "idle": return "idle";
+        case "connecting": return "connecting";
+        case "listening": return "listening";
+        case "thinking": return "processing";
+        case "speaking": return "speaking";
+        case "error": return "idle";
+        default: return "idle";
+    }
+}
 
+// ─── Conversation Types ───────────────────────────────────
+
+interface ConversationEntry {
+    role: "user" | "agent";
+    text: string;
+    timestamp: number;
+}
+
+// ─── Component ────────────────────────────────────────────
+
+export default function LiveAudioStreamer() {
     // Voice selection
     const [selectedGender, setSelectedGender] = useState<"male" | "female">("female");
     const [selectedVoice, setSelectedVoice] = useState("Kavya");
     const [voicePanelOpen, setVoicePanelOpen] = useState(false);
 
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const streamRef = useRef<MediaStream | null>(null);
-    const analyserRef = useRef<AnalyserNode | null>(null);
-    const audioContextRef = useRef<AudioContext | null>(null);
+    // Conversation log
+    const [conversation, setConversation] = useState<ConversationEntry[]>([]);
+
+    // Waveform animation
+    const [waveformHeights, setWaveformHeights] = useState<number[]>(Array(12).fill(10));
     const animFrameRef = useRef<number | null>(null);
-    const isRecordingRef = useRef(false);
-    const audioRef = useRef<HTMLAudioElement | null>(null);
-    const userIdRef = useRef<string>(crypto.randomUUID());
-    const selectedVoiceRef = useRef(selectedVoice);
 
     const voices = selectedGender === "male" ? MALE_VOICES : FEMALE_VOICES;
 
-    // Keep voice ref in sync
-    useEffect(() => {
-        selectedVoiceRef.current = selectedVoice;
-    }, [selectedVoice]);
+    // ── WebSocket URL from env ────────────────────────────
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8805/ws";
 
-    // Send voice selection to backend when it changes
-    useEffect(() => {
-        fetch("/api/set-voice", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ voice: selectedVoice, user_id: userIdRef.current }),
-        }).catch(() => { });
-    }, [selectedVoice]);
+    // ── Transcript handler ────────────────────────────────
+    const handleTranscription = useCallback((text: string) => {
+        setConversation((prev) => [
+            ...prev,
+            { role: "user", text, timestamp: Date.now() },
+        ]);
+    }, []);
 
-    // Cleanup session on unmount
+    const handleBotStarted = useCallback(() => {
+        // Bot started speaking — could track response timing here
+    }, []);
+
+    const handleBotStopped = useCallback(() => {
+        // Bot finished speaking
+    }, []);
+
+    const handleError = useCallback((message: string) => {
+        console.error("[LiveAudioStreamer] error:", message);
+    }, []);
+
+    // ── Voice Agent Hook ──────────────────────────────────
+    const { status, error, connect, disconnect } = useVoiceAgent({
+        wsUrl,
+        language: "hi-IN",
+        onTranscription: handleTranscription,
+        onBotStartedSpeaking: handleBotStarted,
+        onBotStoppedSpeaking: handleBotStopped,
+        onError: handleError,
+    });
+
+    const displayState = toDisplayState(status);
+
+    // Connection timeout — if stuck in 'connecting' for 15s, auto-disconnect
+    useEffect(() => {
+        if (displayState !== "connecting") return;
+        const timer = setTimeout(() => {
+            disconnect();
+        }, 15000);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [displayState, disconnect]);
+
+    // ── Waveform Animation ────────────────────────────────
+    // Animate waveform bars based on agent state
+    useEffect(() => {
+        if (displayState === "idle" || displayState === "connecting") {
+            setWaveformHeights(Array(12).fill(10));
+            if (animFrameRef.current) {
+                cancelAnimationFrame(animFrameRef.current);
+                animFrameRef.current = null;
+            }
+            return;
+        }
+
+        let frame = 0;
+        const animate = () => {
+            frame++;
+            const heights = Array.from({ length: 12 }, (_, i) => {
+                if (displayState === "listening") {
+                    // Subtle breathing animation while listening
+                    return 6 + Math.sin(frame * 0.06 + i * 0.5) * 12 + Math.random() * 8;
+                } else if (displayState === "speaking") {
+                    // More energetic bars while bot speaks
+                    return 8 + Math.sin(frame * 0.1 + i * 0.7) * 20 + Math.random() * 15;
+                } else {
+                    // Processing — gentle pulse
+                    return 8 + Math.sin(frame * 0.04 + i * 0.3) * 6;
+                }
+            });
+            setWaveformHeights(heights);
+            animFrameRef.current = requestAnimationFrame(animate);
+        };
+
+        animFrameRef.current = requestAnimationFrame(animate);
+        return () => {
+            if (animFrameRef.current) {
+                cancelAnimationFrame(animFrameRef.current);
+                animFrameRef.current = null;
+            }
+        };
+    }, [displayState]);
+
+    // ── Toggle Connection ─────────────────────────────────
+    const toggleStream = async () => {
+        if (displayState !== "idle") {
+            disconnect();
+            setConversation([]);
+            return;
+        }
+        // Clear any previous errors when retrying
+        await connect();
+    };
+
+    // ── Cleanup on unmount ────────────────────────────────
     useEffect(() => {
         return () => {
-            stopEverything();
-            fetch("/api/end-session", {
-                method: "POST",
-                body: new URLSearchParams({ user_id: userIdRef.current }),
-            }).catch(() => { });
+            disconnect();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const stopEverything = () => {
-        isRecordingRef.current = false;
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") mediaRecorderRef.current.stop();
-        if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
-        if (audioContextRef.current) { audioContextRef.current.close(); audioContextRef.current = null; }
-        if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = null; }
-        if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-        analyserRef.current = null;
-        mediaRecorderRef.current = null;
-        setWaveformHeights(Array(12).fill(10));
-    };
-
-    const animateWaveform = useCallback(() => {
-        const analyser = analyserRef.current;
-        if (!analyser) return;
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(dataArray);
-        const step = Math.floor(dataArray.length / 12);
-        const heights = Array.from({ length: 12 }, (_, i) => 4 + ((dataArray[i * step] || 0) / 255) * 50);
-        setWaveformHeights(heights);
-        animFrameRef.current = requestAnimationFrame(animateWaveform);
-    }, []);
-
-    const recordAndSend = useCallback(async () => {
-        if (!streamRef.current || !isRecordingRef.current) return;
-        return new Promise<void>((resolve) => {
-            const chunks: Blob[] = [];
-            const mr = new MediaRecorder(streamRef.current!, { mimeType: "audio/webm" });
-            mediaRecorderRef.current = mr;
-            mr.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-            mr.onstop = async () => {
-                if (chunks.length === 0 || !isRecordingRef.current) { resolve(); return; }
-                setAgentState("processing");
-                try {
-                    const blob = new Blob(chunks, { type: "audio/webm" });
-                    const formData = new FormData();
-                    formData.append("audio", blob, "recording.webm");
-                    formData.append("user_id", userIdRef.current);
-                    formData.append("voice", selectedVoiceRef.current);
-                    const res = await fetch("/api/voice-chat", { method: "POST", body: formData });
-                    if (!res.ok) throw new Error(`Server error: ${res.status}`);
-                    const data = await res.json();
-                    if (data.transcript && data.transcript.trim()) {
-                        if (data.user_id) userIdRef.current = data.user_id;
-                        // Add new entry with empty response, then stream characters in
-                        setConversation((prev) => [...prev, { transcript: data.transcript, response: "" }]);
-                        if (data.response) {
-                            const full = String(data.response);
-                            let i = 0;
-                            const step = Math.max(1, Math.floor(full.length / 200));
-                            const interval = setInterval(() => {
-                                i += step;
-                                setConversation((prev) => {
-                                    if (prev.length === 0) return prev;
-                                    const last = prev[prev.length - 1];
-                                    const updated: ConversationEntry = {
-                                        ...last,
-                                        response: full.slice(0, Math.min(i, full.length)),
-                                    };
-                                    return [...prev.slice(0, -1), updated];
-                                });
-                                if (i >= full.length) clearInterval(interval);
-                            }, 20);
-                        }
-                        if (data.audio) { setAgentState("speaking"); await playBase64Audio(data.audio); }
-                    }
-                } catch (err) {
-                    console.error("Voice chat error:", err);
-                    setError("Failed to process audio. Is the backend running?");
-                }
-                if (isRecordingRef.current) setAgentState("listening");
-                resolve();
-            };
-            mr.start();
-            setTimeout(() => { if (mr.state === "recording") mr.stop(); }, 3000);
-        });
-    }, []);
-
-    const playBase64Audio = (base64: string): Promise<void> => {
-        return new Promise((resolve) => {
-            const audioData = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-            const blob = new Blob([audioData], { type: "audio/wav" });
-            const url = URL.createObjectURL(blob);
-            const audio = new Audio(url);
-            audioRef.current = audio;
-            audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-            audio.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-            audio.play().catch(() => resolve());
-        });
-    };
-
-    const startLoop = useCallback(async () => {
-        isRecordingRef.current = true;
-        while (isRecordingRef.current) await recordAndSend();
-    }, [recordAndSend]);
-
-    const toggleStream = async () => {
-        if (agentState !== "idle") { stopEverything(); setAgentState("idle"); return; }
-        setError(null);
-        setAgentState("connecting");
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true } });
-            streamRef.current = stream;
-            const ctx = new AudioContext();
-            audioContextRef.current = ctx;
-            const source = ctx.createMediaStreamSource(stream);
-            const analyser = ctx.createAnalyser();
-            analyser.fftSize = 256;
-            source.connect(analyser);
-            analyserRef.current = analyser;
-            setAgentState("listening");
-            animateWaveform();
-            startLoop();
-        } catch (err) {
-            console.error("Mic error:", err);
-            setError("Microphone access denied.");
-            setAgentState("idle");
-        }
-    };
-
-    // Expose user_id for DocumentUploader
+    // Expose user_id for DocumentUploader (backwards compatibility)
     if (typeof window !== "undefined") {
-        (window as unknown as Record<string, string>).__aura_user_id = userIdRef.current;
+        (window as unknown as Record<string, string>).__aura_user_id = "ws-session";
     }
 
     return (
-        <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center bg-black/40 border border-white/5 rounded-3xl p-8 backdrop-blur-sm relative overflow-hidden">
+        <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center bg-[#FFF5DC]/60 border border-[#C8923C]/10 rounded-3xl p-8 backdrop-blur-sm relative overflow-hidden">
 
             <motion.div
-                animate={{ opacity: agentState !== "idle" ? 0.4 : 0.1, scale: agentState === "listening" || agentState === "speaking" ? [1, 1.2, 1] : 1 }}
-                transition={{ duration: 2, repeat: agentState === "listening" || agentState === "speaking" ? Infinity : 0 }}
-                className="absolute w-96 h-96 bg-brand-purple/30 rounded-full blur-[120px] pointer-events-none"
+                animate={{ opacity: displayState !== "idle" ? 0.3 : 0.1, scale: displayState === "listening" || displayState === "speaking" ? [1, 1.2, 1] : 1 }}
+                transition={{ duration: 2, repeat: displayState === "listening" || displayState === "speaking" ? Infinity : 0 }}
+                className="absolute w-96 h-96 bg-[#C8923C]/20 rounded-full blur-[120px] pointer-events-none"
             />
 
             <div className="z-10 flex flex-col items-center w-full">
-                <h3 className="text-2xl text-white tracking-[0.2em] font-light mb-2 text-center">T E S T<br />T H E &nbsp; A G E N T</h3>
+                <h3 className="text-2xl text-[#3D2E1A] tracking-[0.2em] font-light mb-2 text-center">T E S T<br />T H E &nbsp; A G E N T</h3>
 
                 <div className="h-8 mb-4">
-                    {agentState === "idle" && <p className="text-zinc-500 text-sm tracking-widest text-center">SELECT VOICE & TAP TO START</p>}
-                    {agentState === "connecting" && <p className="text-brand-purple text-sm tracking-widest text-center flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> SECURING NEURAL LINK...</p>}
-                    {agentState === "listening" && <p className="text-green-400 text-sm tracking-widest text-center animate-pulse">LISTENING TO YOUR VOICE</p>}
-                    {agentState === "processing" && <p className="text-yellow-400 text-sm tracking-widest text-center animate-pulse">PROCESSING CONTEXT...</p>}
-                    {agentState === "speaking" && <p className="text-blue-400 text-sm tracking-widest text-center animate-pulse">AGENT RESPONDING</p>}
+                    {displayState === "idle" && <p className="text-[#8B7355] text-sm tracking-widest text-center">SELECT VOICE & TAP TO START</p>}
+                    {displayState === "connecting" && <p className="text-[#C8923C] text-sm tracking-widest text-center flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> SECURING NEURAL LINK...</p>}
+                    {displayState === "listening" && <p className="text-green-600 text-sm tracking-widest text-center animate-pulse">LISTENING TO YOUR VOICE</p>}
+                    {displayState === "processing" && <p className="text-[#C8923C] text-sm tracking-widest text-center animate-pulse">PROCESSING CONTEXT...</p>}
+                    {displayState === "speaking" && <p className="text-blue-600 text-sm tracking-widest text-center animate-pulse">AGENT RESPONDING</p>}
                 </div>
 
                 {/* Voice Model Picker */}
                 <div className="mb-6 w-full max-w-xs">
                     {/* Gender toggle */}
-                    <div className="flex bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06] mb-3">
+                    <div className="flex bg-[#C8923C]/[0.05] rounded-lg p-0.5 border border-[#C8923C]/10 mb-3">
                         {(["female", "male"] as const).map((g) => (
                             <button
                                 key={g}
@@ -219,10 +190,11 @@ export default function LiveAudioStreamer() {
                                     setSelectedVoice(g === "male" ? MALE_VOICES[0] : FEMALE_VOICES[0]);
                                     setVoicePanelOpen(true);
                                 }}
+                                disabled={displayState !== "idle"}
                                 className={`flex-1 py-1.5 text-[10px] tracking-[0.2em] uppercase rounded-md transition-all duration-300 ${selectedGender === g
-                                    ? "bg-brand-purple/15 text-brand-purple border border-brand-purple/30"
-                                    : "text-zinc-500 hover:text-zinc-300"
-                                    }`}
+                                    ? "bg-[#C8923C]/15 text-[#C8923C] border border-[#C8923C]/30"
+                                    : "text-[#8B7355] hover:text-[#3D2E1A]"
+                                    } ${displayState !== "idle" ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
                                 {g}
                             </button>
@@ -232,10 +204,11 @@ export default function LiveAudioStreamer() {
                     {/* Voice selector toggle */}
                     <button
                         onClick={() => setVoicePanelOpen(!voicePanelOpen)}
-                        className="w-full flex items-center justify-between px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-lg text-xs tracking-[0.15em] text-zinc-300 hover:border-brand-purple/30 transition-all duration-300"
+                        disabled={displayState !== "idle"}
+                        className={`w-full flex items-center justify-between px-3 py-2 bg-[#C8923C]/[0.05] border border-[#C8923C]/10 rounded-lg text-xs tracking-[0.15em] text-[#3D2E1A] hover:border-[#C8923C]/30 transition-all duration-300 ${displayState !== "idle" ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                         <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-brand-purple animate-pulse" />
+                            <span className="w-2 h-2 rounded-full bg-[#C8923C] animate-pulse" />
                             {selectedVoice.toUpperCase()}
                         </span>
                         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${voicePanelOpen ? "rotate-180" : ""}`} />
@@ -251,14 +224,14 @@ export default function LiveAudioStreamer() {
                                 transition={{ duration: 0.2 }}
                                 className="overflow-hidden"
                             >
-                                <div className="mt-2 max-h-[120px] overflow-y-auto rounded-lg border border-white/[0.06] bg-[#0a0a0a] scrollbar-thin scrollbar-thumb-brand-purple/30 scrollbar-track-transparent">
+                                <div className="mt-2 max-h-[120px] overflow-y-auto rounded-lg border border-[#C8923C]/10 bg-[#FFFDF5]">
                                     {voices.map((voice) => (
                                         <button
                                             key={voice}
                                             onClick={() => { setSelectedVoice(voice); setVoicePanelOpen(false); }}
-                                            className={`w-full text-left px-3 py-2 text-[11px] tracking-[0.15em] border-b border-white/[0.03] last:border-b-0 transition-all duration-200 ${selectedVoice === voice
-                                                ? "text-brand-purple bg-brand-purple/10"
-                                                : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
+                                            className={`w-full text-left px-3 py-2 text-[11px] tracking-[0.15em] border-b border-[#C8923C]/[0.06] last:border-b-0 transition-all duration-200 ${selectedVoice === voice
+                                                ? "text-[#C8923C] bg-[#C8923C]/10"
+                                                : "text-[#8B7355] hover:text-[#3D2E1A] hover:bg-[#C8923C]/[0.04]"
                                                 }`}
                                         >
                                             {voice.toUpperCase()}
@@ -273,7 +246,7 @@ export default function LiveAudioStreamer() {
                 {/* Error display */}
                 <AnimatePresence>
                     {error && (
-                        <motion.p initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-red-400 text-xs tracking-wider mb-4 text-center">
+                        <motion.p initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-red-500 text-xs tracking-wider mb-4 text-center">
                             {error}
                         </motion.p>
                     )}
@@ -285,17 +258,17 @@ export default function LiveAudioStreamer() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className={`relative flex items-center justify-center w-28 h-28 rounded-full border-2 transition-all duration-300
-                        ${agentState !== "idle"
-                            ? "border-brand-purple bg-brand-purple/10 text-brand-purple"
-                            : "border-white/20 bg-black text-white hover:border-brand-purple/50"}`}
+                        ${displayState !== "idle"
+                            ? "border-[#C8923C] bg-[#C8923C]/10 text-[#C8923C]"
+                            : "border-[#C8923C]/20 bg-[#FFFDF5] text-[#3D2E1A] hover:border-[#C8923C]/50"}`}
                 >
-                    {agentState !== "idle" && (
+                    {displayState !== "idle" && (
                         <>
-                            <motion.div className="absolute inset-0 rounded-full border border-brand-purple/50" animate={{ scale: [1, 1.5], opacity: [1, 0] }} transition={{ duration: 1.5, repeat: Infinity }} />
-                            <motion.div className="absolute inset-0 rounded-full border border-brand-purple/30" animate={{ scale: [1, 2], opacity: [1, 0] }} transition={{ duration: 2, repeat: Infinity, delay: 0.5 }} />
+                            <motion.div className="absolute inset-0 rounded-full border border-[#C8923C]/50" animate={{ scale: [1, 1.5], opacity: [1, 0] }} transition={{ duration: 1.5, repeat: Infinity }} />
+                            <motion.div className="absolute inset-0 rounded-full border border-[#C8923C]/30" animate={{ scale: [1, 2], opacity: [1, 0] }} transition={{ duration: 2, repeat: Infinity, delay: 0.5 }} />
                         </>
                     )}
-                    {agentState !== "idle" ? <Square className="w-8 h-8 fill-current" /> : <Mic className="w-8 h-8" />}
+                    {displayState !== "idle" ? <Square className="w-8 h-8 fill-current" /> : <Mic className="w-8 h-8" />}
                 </motion.button>
 
                 {/* Waveform */}
@@ -303,42 +276,53 @@ export default function LiveAudioStreamer() {
                     {waveformHeights.map((height, i) => (
                         <motion.div
                             key={i}
-                            className={`w-full rounded-t-sm ${agentState !== "idle" ? "bg-brand-purple" : "bg-white/10"}`}
+                            className={`w-full rounded-t-sm ${displayState !== "idle" ? "bg-[#C8923C]" : "bg-[#C8923C]/15"}`}
                             animate={{ height: `${Math.max(4, height)}px` }}
                             transition={{ type: "spring", stiffness: 300, damping: 20 }}
                         />
                     ))}
                 </div>
 
-                {/* Conversation */}
+                {/* Live Conversation Transcript */}
                 <div className="mt-6 w-full max-w-md space-y-3">
                     <AnimatePresence initial={false}>
-                        {conversation.map((entry, i) => {
-                            const isLatest = i === conversation.length - 1;
+                        {conversation.slice(-6).map((entry, i, arr) => {
+                            const isLatest = i === arr.length - 1;
                             return (
                                 <motion.div
-                                    key={i} layout
+                                    key={entry.timestamp} layout
                                     initial={{ opacity: 0, y: 30, scale: 0.95 }}
                                     animate={{ opacity: isLatest ? 1 : 0.5, y: 0, scale: isLatest ? 1 : 0.97 }}
                                     transition={{ layout: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.3 }, y: { type: "spring", stiffness: 400, damping: 25 }, scale: { duration: 0.3 } }}
-                                    className="space-y-2"
                                 >
-                                    <motion.div className={`rounded-xl px-4 py-3 border transition-all duration-300 ${isLatest ? "bg-white/10 border-white/10" : "bg-white/[0.03] border-white/[0.03]"}`}>
-                                        <p className="text-[10px] text-zinc-500 tracking-widest mb-1">YOU</p>
-                                        <p className={`text-sm leading-relaxed transition-colors duration-300 ${isLatest ? "text-white" : "text-zinc-500"}`}>{entry.transcript}</p>
-                                    </motion.div>
-                                    <motion.div
-                                        initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15, duration: 0.3 }}
-                                        className={`rounded-xl px-4 py-3 border transition-all duration-300 ${isLatest ? "bg-brand-purple/15 border-brand-purple/30" : "bg-brand-purple/5 border-brand-purple/10"}`}
-                                    >
-                                        <p className={`text-[10px] tracking-widest mb-1 transition-colors duration-300 ${isLatest ? "text-brand-purple" : "text-brand-purple/50"}`}>AGENT</p>
-                                        <p className={`text-sm leading-relaxed transition-colors duration-300 ${isLatest ? "text-white" : "text-zinc-500"}`}>{entry.response}</p>
+                                    <motion.div className={`rounded-xl px-4 py-3 border transition-all duration-300 ${entry.role === "user"
+                                        ? isLatest ? "bg-[#3D2E1A]/5 border-[#3D2E1A]/10" : "bg-[#3D2E1A]/[0.02] border-[#3D2E1A]/[0.03]"
+                                        : isLatest ? "bg-[#C8923C]/10 border-[#C8923C]/25" : "bg-[#C8923C]/5 border-[#C8923C]/10"
+                                        }`}>
+                                        <p className={`text-[10px] tracking-widest mb-1 ${entry.role === "user" ? "text-[#8B7355]" : isLatest ? "text-[#C8923C]" : "text-[#C8923C]/50"}`}>
+                                            {entry.role === "user" ? "YOU" : "AGENT"}
+                                        </p>
+                                        <p className={`text-sm leading-relaxed transition-colors duration-300 ${isLatest ? "text-[#3D2E1A]" : "text-[#8B7355]"}`}>
+                                            {entry.text}
+                                        </p>
                                     </motion.div>
                                 </motion.div>
                             );
                         })}
                     </AnimatePresence>
                 </div>
+
+                {/* Connection status indicator */}
+                {displayState !== "idle" && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mt-6 flex items-center gap-2"
+                    >
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-[10px] tracking-[0.2em] text-[#B8A080]">REALTIME WEBSOCKET ACTIVE</span>
+                    </motion.div>
+                )}
             </div>
         </div>
     );

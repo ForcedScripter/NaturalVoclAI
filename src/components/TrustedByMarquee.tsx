@@ -77,10 +77,10 @@ const doubled = [...logos, ...logos];
 
 export default function TrustedByMarquee() {
     return (
-        <section className="relative w-full py-16 bg-[#050505] overflow-hidden">
-            {/* Top/bottom edge fades */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <section className="relative w-full py-16 bg-[#FFFDF5] overflow-hidden">
+            {/* Top/bottom edge lines */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8923C]/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8923C]/20 to-transparent" />
 
             {/* Heading */}
             <motion.div
@@ -90,24 +90,24 @@ export default function TrustedByMarquee() {
                 transition={{ duration: 0.6 }}
                 className="text-center mb-10"
             >
-                <p className="text-[10px] tracking-[0.4em] text-brand-purple uppercase mb-2">
+                <p className="text-[10px] tracking-[0.4em] text-[#C8923C] uppercase mb-2">
                     Tested Across Industries
                 </p>
-                <h3 className="text-lg md:text-xl text-zinc-400 tracking-[0.2em] font-light uppercase">
+                <h3 className="text-lg md:text-xl text-[#8B7355] tracking-[0.2em] font-light uppercase">
                     20+ Working Instances
                 </h3>
             </motion.div>
 
             {/* Left / right edge masks */}
-            <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
+            <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#FFFDF5] to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#FFFDF5] to-transparent z-10 pointer-events-none" />
 
             {/* Marquee track */}
             <div className="flex marquee-track">
                 {doubled.map((logo, i) => (
                     <div
                         key={`${logo.name}-${i}`}
-                        className="flex items-center justify-center px-10 md:px-14 shrink-0 text-zinc-600 hover:text-zinc-300 transition-colors duration-500"
+                        className="flex items-center justify-center px-10 md:px-14 shrink-0 text-[#C8923C]/30 hover:text-[#C8923C] transition-colors duration-500"
                     >
                         {logo.svg}
                     </div>

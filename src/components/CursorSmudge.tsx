@@ -23,7 +23,7 @@ export default function CursorSmudge() {
         const speed = Math.sqrt(dx * dx + dy * dy);
 
         if (speed > 2) {
-            const hue = 270 + Math.random() * 30 - 15; // purple hues
+            const hue = 35 + Math.random() * 20 - 10; // golden hues
             pointsRef.current.push({
                 x,
                 y,
@@ -70,9 +70,9 @@ export default function CursorSmudge() {
                         p.x, p.y, 0,
                         p.x, p.y, p.radius
                     );
-                    gradient.addColorStop(0, `hsla(${p.hue}, 70%, 40%, ${p.opacity})`);
-                    gradient.addColorStop(0.5, `hsla(${p.hue}, 60%, 30%, ${p.opacity * 0.4})`);
-                    gradient.addColorStop(1, `hsla(${p.hue}, 50%, 20%, 0)`);
+                    gradient.addColorStop(0, `hsla(${p.hue}, 70%, 50%, ${p.opacity})`);
+                    gradient.addColorStop(0.5, `hsla(${p.hue}, 60%, 40%, ${p.opacity * 0.4})`);
+                    gradient.addColorStop(1, `hsla(${p.hue}, 50%, 30%, 0)`);
                     ctx.beginPath();
                     ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                     ctx.fillStyle = gradient;
@@ -86,9 +86,9 @@ export default function CursorSmudge() {
             const my = mouseRef.current.y;
             if (mx > 0 && my > 0) {
                 const g = ctx.createRadialGradient(mx, my, 0, mx, my, 120);
-                g.addColorStop(0, "hsla(270, 70%, 50%, 0.12)");
-                g.addColorStop(0.5, "hsla(270, 60%, 40%, 0.05)");
-                g.addColorStop(1, "hsla(270, 50%, 30%, 0)");
+                g.addColorStop(0, "hsla(35, 70%, 50%, 0.12)");
+                g.addColorStop(0.5, "hsla(35, 60%, 40%, 0.05)");
+                g.addColorStop(1, "hsla(35, 50%, 30%, 0)");
                 ctx.beginPath();
                 ctx.arc(mx, my, 120, 0, Math.PI * 2);
                 ctx.fillStyle = g;

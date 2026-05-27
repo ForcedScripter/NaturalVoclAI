@@ -70,14 +70,14 @@ export default function Navbar() {
             animate={{ y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
             className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled
-                ? "bg-black/80 backdrop-blur-md border-b border-white/[0.06] py-3"
+                ? "bg-[#FFFDF5]/90 backdrop-blur-md border-b border-[#C8923C]/10 py-3 shadow-sm shadow-[#C8923C]/5"
                 : "bg-transparent py-5"
                 }`}
         >
             <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
 
                 {/* Logo */}
-                <Link href="/" className="text-xl font-bold tracking-[0.3em] text-white hover:text-brand-purple transition-colors duration-300">
+                <Link href="/" className="text-xl font-bold tracking-[0.3em] text-[#3D2E1A] hover:text-[#C8923C] transition-colors duration-300">
                     MINISTROS
                 </Link>
 
@@ -85,7 +85,7 @@ export default function Navbar() {
                 <button
                     type="button"
                     onClick={() => setMobileOpen((v) => !v)}
-                    className="md:hidden p-2 rounded-lg text-zinc-300 hover:text-white hover:bg-white/5 transition-all duration-300"
+                    className="md:hidden p-2 rounded-lg text-[#8B7355] hover:text-[#3D2E1A] hover:bg-[#C8923C]/5 transition-all duration-300"
                     aria-label={mobileOpen ? "Close menu" : "Open menu"}
                     aria-expanded={mobileOpen}
                 >
@@ -100,7 +100,7 @@ export default function Navbar() {
                         <button
                             onClick={() => setDropdownOpen(!dropdownOpen)}
                             onMouseEnter={() => setDropdownOpen(true)}
-                            className={`flex items-center gap-1.5 px-4 py-2 text-xs tracking-[0.2em] rounded-lg transition-all duration-300 ${dropdownOpen ? "text-white bg-white/5" : "text-zinc-400 hover:text-white"
+                            className={`flex items-center gap-1.5 px-4 py-2 text-xs tracking-[0.2em] rounded-lg transition-all duration-300 ${dropdownOpen ? "text-[#3D2E1A] bg-[#C8923C]/10" : "text-[#8B7355] hover:text-[#3D2E1A]"
                                 }`}
                         >
                             PRODUCT
@@ -115,21 +115,21 @@ export default function Navbar() {
                                     exit={{ opacity: 0, y: 8, scale: 0.96 }}
                                     transition={{ duration: 0.2, ease: "easeOut" }}
                                     onMouseLeave={() => setDropdownOpen(false)}
-                                    className="absolute top-full left-0 mt-2 w-56 bg-[#0a0a0a] border border-white/[0.08] rounded-xl overflow-hidden shadow-2xl shadow-black/50"
+                                    className="absolute top-full left-0 mt-2 w-56 bg-[#FFFDF5] border border-[#C8923C]/15 rounded-xl overflow-hidden shadow-2xl shadow-[#C8923C]/10"
                                 >
                                     {productLinks.map((item) => (
                                         <Link
                                             key={item.href}
                                             href={item.href}
                                             onClick={() => setDropdownOpen(false)}
-                                            className={`block px-5 py-3.5 text-xs tracking-[0.15em] transition-all duration-200 border-b border-white/[0.04] last:border-b-0 ${item.highlight
-                                                ? "text-brand-purple font-medium bg-brand-purple/5 hover:bg-brand-purple/10"
-                                                : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
+                                            className={`block px-5 py-3.5 text-xs tracking-[0.15em] transition-all duration-200 border-b border-[#C8923C]/[0.06] last:border-b-0 ${item.highlight
+                                                ? "text-[#C8923C] font-medium bg-[#C8923C]/5 hover:bg-[#C8923C]/10"
+                                                : "text-[#8B7355] hover:text-[#3D2E1A] hover:bg-[#C8923C]/[0.04]"
                                                 }`}
                                         >
                                             {item.label}
                                             {item.highlight && (
-                                                <span className="ml-2 inline-block w-1.5 h-1.5 rounded-full bg-brand-purple animate-pulse" />
+                                                <span className="ml-2 inline-block w-1.5 h-1.5 rounded-full bg-[#C8923C] animate-pulse" />
                                             )}
                                         </Link>
                                     ))}
@@ -141,7 +141,7 @@ export default function Navbar() {
                     {/* About Us */}
                     <Link
                         href="/about"
-                        className={`px-4 py-2 text-xs tracking-[0.2em] rounded-lg transition-all duration-300 ${isActive("/about") ? "text-white bg-white/5" : "text-zinc-400 hover:text-white"
+                        className={`px-4 py-2 text-xs tracking-[0.2em] rounded-lg transition-all duration-300 ${isActive("/about") ? "text-[#3D2E1A] bg-[#C8923C]/10" : "text-[#8B7355] hover:text-[#3D2E1A]"
                             }`}
                     >
                         ABOUT US
@@ -150,7 +150,7 @@ export default function Navbar() {
                     {/* Dashboard */}
                     <Link
                         href="/dashboard"
-                        className={`px-4 py-2 text-xs tracking-[0.2em] rounded-lg transition-all duration-300 ${isActive("/dashboard") ? "text-white bg-white/5" : "text-zinc-400 hover:text-white"
+                        className={`px-4 py-2 text-xs tracking-[0.2em] rounded-lg transition-all duration-300 ${isActive("/dashboard") ? "text-[#3D2E1A] bg-[#C8923C]/10" : "text-[#8B7355] hover:text-[#3D2E1A]"
                             }`}
                     >
                         DASHBOARD
@@ -161,13 +161,13 @@ export default function Navbar() {
                 <div className="hidden md:flex items-center gap-3">
                     {username ? (
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/[0.06]">
-                                <User className="w-3.5 h-3.5 text-brand-purple" />
-                                <span className="text-xs tracking-widest text-zinc-300">{username.toUpperCase()}</span>
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#C8923C]/5 border border-[#C8923C]/15">
+                                <User className="w-3.5 h-3.5 text-[#C8923C]" />
+                                <span className="text-xs tracking-widest text-[#8B7355]">{username.toUpperCase()}</span>
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-400/5 transition-all duration-300"
+                                className="p-2 rounded-lg text-[#B8A080] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
                                 title="Logout"
                             >
                                 <LogOut className="w-4 h-4" />
@@ -176,7 +176,7 @@ export default function Navbar() {
                     ) : (
                         <Link
                             href="/login"
-                            className="px-5 py-2 text-xs tracking-[0.2em] rounded-lg bg-brand-purple/10 border border-brand-purple/30 text-brand-purple hover:bg-brand-purple/20 hover:border-brand-purple/50 transition-all duration-300"
+                            className="px-5 py-2 text-xs tracking-[0.2em] rounded-lg bg-[#C8923C]/10 border border-[#C8923C]/30 text-[#C8923C] hover:bg-[#C8923C]/20 hover:border-[#C8923C]/50 transition-all duration-300"
                         >
                             LOGIN
                         </Link>
@@ -192,14 +192,14 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="md:hidden border-t border-white/[0.06] bg-black/90 backdrop-blur-md"
+                        className="md:hidden border-t border-[#C8923C]/10 bg-[#FFFDF5]/95 backdrop-blur-md"
                     >
                         <div className="container mx-auto px-4 sm:px-6 py-4 space-y-2">
                             {/* Product links */}
                             <button
                                 type="button"
                                 onClick={() => setDropdownOpen((v) => !v)}
-                                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs tracking-[0.2em] text-zinc-300 hover:text-white hover:bg-white/5 transition-all duration-300"
+                                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs tracking-[0.2em] text-[#8B7355] hover:text-[#3D2E1A] hover:bg-[#C8923C]/5 transition-all duration-300"
                                 aria-expanded={dropdownOpen}
                             >
                                 <span>PRODUCT</span>
@@ -213,7 +213,7 @@ export default function Navbar() {
                                         animate={{ opacity: 1, height: "auto" }}
                                         exit={{ opacity: 0, height: 0 }}
                                         transition={{ duration: 0.2, ease: "easeOut" }}
-                                        className="overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.03]"
+                                        className="overflow-hidden rounded-lg border border-[#C8923C]/10 bg-[#C8923C]/[0.03]"
                                     >
                                         <div className="py-1">
                                             {productLinks.map((item) => (
@@ -221,8 +221,8 @@ export default function Navbar() {
                                                     key={item.href}
                                                     href={item.href}
                                                     className={`block px-4 py-3 text-xs tracking-[0.15em] transition-all duration-200 ${item.highlight
-                                                        ? "text-brand-purple font-medium bg-brand-purple/5 hover:bg-brand-purple/10"
-                                                        : "text-zinc-300 hover:text-white hover:bg-white/[0.04]"
+                                                        ? "text-[#C8923C] font-medium bg-[#C8923C]/5 hover:bg-[#C8923C]/10"
+                                                        : "text-[#8B7355] hover:text-[#3D2E1A] hover:bg-[#C8923C]/[0.04]"
                                                         }`}
                                                 >
                                                     {item.label}
@@ -235,7 +235,7 @@ export default function Navbar() {
 
                             <Link
                                 href="/about"
-                                className={`block px-3 py-2 rounded-lg text-xs tracking-[0.2em] transition-all duration-300 ${isActive("/about") ? "text-white bg-white/5" : "text-zinc-300 hover:text-white hover:bg-white/5"
+                                className={`block px-3 py-2 rounded-lg text-xs tracking-[0.2em] transition-all duration-300 ${isActive("/about") ? "text-[#3D2E1A] bg-[#C8923C]/10" : "text-[#8B7355] hover:text-[#3D2E1A] hover:bg-[#C8923C]/5"
                                     }`}
                             >
                                 ABOUT US
@@ -243,22 +243,22 @@ export default function Navbar() {
 
                             <Link
                                 href="/dashboard"
-                                className={`block px-3 py-2 rounded-lg text-xs tracking-[0.2em] transition-all duration-300 ${isActive("/dashboard") ? "text-white bg-white/5" : "text-zinc-300 hover:text-white hover:bg-white/5"
+                                className={`block px-3 py-2 rounded-lg text-xs tracking-[0.2em] transition-all duration-300 ${isActive("/dashboard") ? "text-[#3D2E1A] bg-[#C8923C]/10" : "text-[#8B7355] hover:text-[#3D2E1A] hover:bg-[#C8923C]/5"
                                     }`}
                             >
                                 DASHBOARD
                             </Link>
 
-                            <div className="pt-2 border-t border-white/[0.06]">
+                            <div className="pt-2 border-t border-[#C8923C]/10">
                                 {username ? (
-                                    <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-white/5 border border-white/[0.06]">
+                                    <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-[#C8923C]/5 border border-[#C8923C]/10">
                                         <div className="flex items-center gap-2">
-                                            <User className="w-4 h-4 text-brand-purple" />
-                                            <span className="text-xs tracking-widest text-zinc-300">{username.toUpperCase()}</span>
+                                            <User className="w-4 h-4 text-[#C8923C]" />
+                                            <span className="text-xs tracking-widest text-[#8B7355]">{username.toUpperCase()}</span>
                                         </div>
                                         <button
                                             onClick={handleLogout}
-                                            className="p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-400/5 transition-all duration-300"
+                                            className="p-2 rounded-lg text-[#B8A080] hover:text-red-500 hover:bg-red-50 transition-all duration-300"
                                             title="Logout"
                                         >
                                             <LogOut className="w-4 h-4" />
@@ -267,7 +267,7 @@ export default function Navbar() {
                                 ) : (
                                     <Link
                                         href="/login"
-                                        className="block text-center px-5 py-2 text-xs tracking-[0.2em] rounded-lg bg-brand-purple/10 border border-brand-purple/30 text-brand-purple hover:bg-brand-purple/20 hover:border-brand-purple/50 transition-all duration-300"
+                                        className="block text-center px-5 py-2 text-xs tracking-[0.2em] rounded-lg bg-[#C8923C]/10 border border-[#C8923C]/30 text-[#C8923C] hover:bg-[#C8923C]/20 hover:border-[#C8923C]/50 transition-all duration-300"
                                     >
                                         LOGIN
                                     </Link>

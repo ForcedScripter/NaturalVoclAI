@@ -57,9 +57,9 @@ export default function LoginPage() {
     };
 
     return (
-        <main className="min-h-screen bg-[#050505] text-white flex items-center justify-center px-4">
-            <div className="fixed top-1/4 left-1/4 w-[40vw] h-[40vw] bg-brand-purple/5 rounded-full blur-[200px] pointer-events-none" />
-            <div className="fixed bottom-1/4 right-1/4 w-[30vw] h-[30vw] bg-violet-500/5 rounded-full blur-[180px] pointer-events-none" />
+        <main className="min-h-screen bg-[#FFFDF5] text-[#3D2E1A] flex items-center justify-center px-4">
+            <div className="fixed top-1/4 left-1/4 w-[40vw] h-[40vw] bg-brand-gold/5 rounded-full blur-[200px] pointer-events-none" />
+            <div className="fixed bottom-1/4 right-1/4 w-[30vw] h-[30vw] bg-[#DEB664]/5 rounded-full blur-[180px] pointer-events-none" />
 
             {/* Cursor smudge effect */}
             <CursorSmudge />
@@ -75,20 +75,20 @@ export default function LoginPage() {
                     <h1 className="text-3xl font-light tracking-[0.3em] uppercase mb-2">
                         A U R A
                     </h1>
-                    <p className="text-zinc-500 text-xs tracking-[0.2em]">
+                    <p className="text-[#8B7355] text-xs tracking-[0.2em]">
                         {mode === "login" ? "SIGN IN TO YOUR ACCOUNT" : "CREATE YOUR ACCOUNT"}
                     </p>
                 </div>
 
                 {/* Tab Toggle */}
-                <div className="flex mb-8 bg-white/[0.03] rounded-xl p-1 border border-white/[0.06]">
+                <div className="flex mb-8 bg-[#C8923C]/[0.04] rounded-xl p-1 border border-[#C8923C]/10">
                     {(["login", "signup"] as Mode[]).map((m) => (
                         <button
                             key={m}
                             onClick={() => { setMode(m); setError(""); setSuccess(""); }}
                             className={`flex-1 py-2.5 text-xs tracking-[0.2em] uppercase rounded-lg transition-all duration-300 ${mode === m
-                                ? "bg-brand-purple/15 text-brand-purple border border-brand-purple/30"
-                                : "text-zinc-500 hover:text-zinc-300"
+                                ? "bg-brand-gold/15 text-brand-gold border border-brand-gold/30"
+                                : "text-[#8B7355] hover:text-[#3D2E1A]"
                                 }`}
                         >
                             {m === "login" ? "LOGIN" : "SIGN UP"}
@@ -99,20 +99,20 @@ export default function LoginPage() {
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-[10px] tracking-[0.2em] text-zinc-500 mb-2 uppercase">Username</label>
+                        <label className="block text-[10px] tracking-[0.2em] text-[#8B7355] mb-2 uppercase">Username</label>
                         <input
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required
                             minLength={3}
-                            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm tracking-wider text-white placeholder-zinc-600 focus:outline-none focus:border-brand-purple/40 transition-colors duration-300"
+                            className="w-full bg-[#C8923C]/[0.04] border border-[#C8923C]/15 rounded-xl px-4 py-3 text-sm tracking-wider text-[#3D2E1A] placeholder-[#B8A080] focus:outline-none focus:border-brand-gold/40 transition-colors duration-300"
                             placeholder="Enter username"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-[10px] tracking-[0.2em] text-zinc-500 mb-2 uppercase">Password</label>
+                        <label className="block text-[10px] tracking-[0.2em] text-[#8B7355] mb-2 uppercase">Password</label>
                         <div className="relative">
                             <input
                                 type={showPassword ? "text" : "password"}
@@ -120,13 +120,13 @@ export default function LoginPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 minLength={4}
-                                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm tracking-wider text-white placeholder-zinc-600 focus:outline-none focus:border-brand-purple/40 transition-colors duration-300 pr-12"
+                                className="w-full bg-[#C8923C]/[0.04] border border-[#C8923C]/15 rounded-xl px-4 py-3 text-sm tracking-wider text-[#3D2E1A] placeholder-[#B8A080] focus:outline-none focus:border-brand-gold/40 transition-colors duration-300 pr-12"
                                 placeholder="Enter password"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B7355] hover:text-[#3D2E1A] transition-colors"
                             >
                                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
@@ -163,7 +163,7 @@ export default function LoginPage() {
                         disabled={loading}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
-                        className="w-full py-3.5 rounded-xl text-xs tracking-[0.2em] uppercase font-medium bg-brand-purple text-white hover:bg-brand-purple/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-brand-purple/20"
+                        className="w-full py-3.5 rounded-xl text-xs tracking-[0.2em] uppercase font-medium bg-brand-gold text-[#3D2E1A] hover:bg-brand-gold/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-brand-gold/20"
                     >
                         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                         {mode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}

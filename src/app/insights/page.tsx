@@ -12,8 +12,8 @@ const insights = [
 
 export default function InsightsPage() {
     return (
-        <main className="min-h-screen bg-[#050505] text-white pt-32 pb-24 px-4">
-            <div className="fixed bottom-0 right-1/4 w-[40vw] h-[40vw] bg-violet-500/5 rounded-full blur-[180px] pointer-events-none" />
+        <main className="min-h-screen bg-[#FFFDF5] text-[#3D2E1A] pt-32 pb-24 px-4">
+            <div className="fixed bottom-0 right-1/4 w-[40vw] h-[40vw] bg-[#DEB664]/5 rounded-full blur-[180px] pointer-events-none" />
 
             <div className="relative z-10 max-w-4xl mx-auto">
                 <motion.div
@@ -22,11 +22,11 @@ export default function InsightsPage() {
                     transition={{ duration: 0.8 }}
                     className="text-center mb-20"
                 >
-                    <p className="text-brand-purple text-xs tracking-[0.3em] uppercase mb-4">Intelligence</p>
+                    <p className="text-brand-gold text-xs tracking-[0.3em] uppercase mb-4">Intelligence</p>
                     <h1 className="text-4xl md:text-6xl font-light tracking-[0.2em] uppercase mb-4">
                         Insights
                     </h1>
-                    <p className="text-zinc-500 tracking-widest text-sm max-w-xl mx-auto leading-relaxed">
+                    <p className="text-[#8B7355] tracking-widest text-sm max-w-xl mx-auto leading-relaxed">
                         Industry trends, research findings, and performance benchmarks.
                     </p>
                 </motion.div>
@@ -38,15 +38,15 @@ export default function InsightsPage() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.2 + i * 0.1, duration: 0.5 }}
-                            className="group flex gap-6 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 hover:border-brand-purple/20 hover:bg-brand-purple/[0.02] transition-all duration-300"
+                            className="group flex gap-6 bg-[#C8923C]/[0.03] border border-[#C8923C]/10 rounded-2xl p-6 hover:border-brand-gold/20 hover:bg-brand-gold/[0.02] transition-all duration-300"
                         >
-                            <div className="text-brand-purple mt-1 shrink-0 group-hover:scale-110 transition-transform duration-300">{item.icon}</div>
+                            <div className="text-brand-gold mt-1 shrink-0 group-hover:scale-110 transition-transform duration-300">{item.icon}</div>
                             <div className="flex-grow">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <h3 className="text-sm tracking-[0.15em] text-white">{item.title.toUpperCase()}</h3>
-                                    <span className="text-[9px] tracking-[0.2em] text-brand-purple/70 bg-brand-purple/10 px-2.5 py-0.5 rounded-full">{item.tag}</span>
+                                    <h3 className="text-sm tracking-[0.15em] text-[#3D2E1A]">{item.title.toUpperCase()}</h3>
+                                    <span className="text-[9px] tracking-[0.2em] text-brand-gold/70 bg-brand-gold/10 px-2.5 py-0.5 rounded-full">{item.tag}</span>
                                 </div>
-                                <p className="text-xs tracking-wider text-zinc-500 leading-relaxed">{item.desc}</p>
+                                <p className="text-xs tracking-wider text-[#8B7355] leading-relaxed">{item.desc}</p>
                             </div>
                         </motion.div>
                     ))}
@@ -56,7 +56,7 @@ export default function InsightsPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1, duration: 0.8 }}
-                    className="text-center text-zinc-600 text-xs tracking-[0.2em] uppercase mt-16"
+                    className="text-center text-[#B8A080] text-xs tracking-[0.2em] uppercase mt-16"
                 >
                     More insights coming soon — Stay tuned
                 </motion.p>
