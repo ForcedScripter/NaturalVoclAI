@@ -1,84 +1,44 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useScroll, useTransform, motion, useMotionValueEvent } from "framer-motion";
-import { useImagePreloader } from "@/hooks/useImagePreloader";
 
 export default function CanvasScrollyTelling() {
     const containerRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    // Total frames in the sequence-1 folder
-    const totalFrames = 120;
-    const { images, loaded } = useImagePreloader(totalFrames, "/sequence-1");
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [videoReady, setVideoReady] = useState(false);
+    const rafRef = useRef<number>(0);
 
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end end"],
     });
 
-    // Calculate the current frame index (0 to 119)
-    const frameIndex = useTransform(scrollYProgress, [0, 1], [0, totalFrames - 1]);
+    // Scrub the video's currentTime based on scroll progress
+    const seekTo = useCallback((progress: number) => {
+        const video = videoRef.current;
+        if (!video || !videoReady || !isFinite(video.duration)) return;
 
-    const render = useCallback((val: number) => {
-        if (!loaded || !canvasRef.current) return;
+        // Clamp to valid range
+        const targetTime = Math.max(0, Math.min(progress * video.duration, video.duration - 0.01));
 
-        const canvas = canvasRef.current;
-
-        // Ensure canvas dimensions are initialized gracefully
-        if (canvas.width === 0 || canvas.height === 0 || canvas.width === 300) {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        // Only seek if the difference is meaningful to avoid jitter
+        if (Math.abs(video.currentTime - targetTime) > 0.02) {
+            video.currentTime = targetTime;
         }
+    }, [videoReady]);
 
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        const currentFrame = Math.floor(val);
-        const img = images[currentFrame];
-
-        if (img) {
-            const cw = canvas.width;
-            const ch = canvas.height;
-            const iw = img.width || 1;
-            const ih = img.height || 1;
-
-            const scale = Math.max(cw / iw, ch / ih);
-            const x = cw / 2 - (iw * scale) / 2;
-            const y = ch / 2 - (ih * scale) / 2;
-
-            ctx.clearRect(0, 0, cw, ch);
-            ctx.drawImage(img, x, y, iw * scale, ih * scale);
-
-            // Light warm overlay instead of dark
-            ctx.fillStyle = "rgba(255, 253, 245, 0.25)";
-            ctx.fillRect(0, 0, cw, ch);
-        }
-    }, [loaded, images]);
-
-    useMotionValueEvent(frameIndex, "change", (latest) => {
-        requestAnimationFrame(() => render(latest));
+    useMotionValueEvent(scrollYProgress, "change", (latest) => {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = requestAnimationFrame(() => seekTo(latest));
     });
 
+    // Initial seek once video is ready
     useEffect(() => {
-        if (loaded) {
-            render(frameIndex.get());
+        if (videoReady) {
+            seekTo(scrollYProgress.get());
         }
-    }, [loaded, frameIndex, render]);
-
-    // Handle Resize
-    useEffect(() => {
-        const handleResize = () => {
-            if (canvasRef.current) {
-                canvasRef.current.width = window.innerWidth;
-                canvasRef.current.height = window.innerHeight;
-            }
-        };
-
-        handleResize();
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
+    }, [videoReady, scrollYProgress, seekTo]);
 
     // Text Animations based on scroll position
     const text1Opacity = useTransform(scrollYProgress, [0, 0.1, 0.2, 0.3], [0, 1, 1, 0]);
@@ -94,17 +54,35 @@ export default function CanvasScrollyTelling() {
         <section ref={containerRef} className="relative h-[400vh] w-full bg-[#FFFDF5]">
             <div className="sticky top-0 h-screen w-full overflow-hidden">
 
-                {!loaded && (
+                {/* Loading state */}
+                {!videoReady && (
                     <div className="absolute inset-0 flex items-center justify-center bg-[#FFFDF5] z-10">
                         <div className="flex flex-col items-center gap-4">
                             <div className="w-12 h-12 border-t-2 border-[#C8923C] rounded-full animate-spin"></div>
-                            <p className="text-[#B8A080] tracking-widest text-sm uppercase">Loading Sequence...</p>
+                            <p className="text-[#B8A080] tracking-widest text-sm uppercase">Loading...</p>
                         </div>
                     </div>
                 )}
 
-                {/* The sequence canvas */}
-                <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover" />
+                {/* The scrollytelling video — scrubbed by scroll */}
+                <video
+                    ref={videoRef}
+                    src="/scrollytelling.mp4"
+                    muted
+                    playsInline
+                    preload="auto"
+                    onLoadedMetadata={() => setVideoReady(true)}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{
+                        filter: "brightness(1.05) sepia(0.08)",
+                    }}
+                />
+
+                {/* Warm overlay to match the site palette */}
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ background: "rgba(255, 253, 245, 0.25)" }}
+                />
 
                 {/* Overlay Storytelling Content */}
                 <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
