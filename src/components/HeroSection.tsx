@@ -5,16 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import ScenarioTheater from "./ScenarioTheater";
 
 // ─── Hotspot definitions ───────────────────────────────────────────────────────
-// Zones are large, covering entire building areas per the reference layout.
 const HOTSPOTS = [
     {
         id: "return",
         label: "Customer Return",
         emoji: "📦",
-        // Zone center
         top: "62%",
         left: "30%",
-        // Large circular hit zone (vw-based for responsiveness)
         zoneWidth: "22vw",
         zoneHeight: "22vw",
         description: "Seamless returns via voice AI — no hold music, no frustration.",
@@ -27,7 +24,6 @@ const HOTSPOTS = [
         emoji: "🎧",
         top: "40%",
         left: "50%",
-        // Tall oval for the skyscraper
         zoneWidth: "20vw",
         zoneHeight: "28vw",
         description: "Intelligent call handling that resolves in seconds, not minutes.",
@@ -50,6 +46,254 @@ const HOTSPOTS = [
 
 type HotspotId = (typeof HOTSPOTS)[number]["id"];
 
+// ─── Flip Card Video Preview ──────────────────────────────────────────────────
+// Shows a premium flip-card near the hotspot: front = "Without AI", back = "With AI"
+function FlipCardPreview({
+    hotspot,
+    anchorPosition,
+}: {
+    hotspot: (typeof HOTSPOTS)[number];
+    anchorPosition: { x: number; y: number };
+}) {
+    const [isFlipped, setIsFlipped] = useState(false);
+    const flipIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+    const withoutRef = useRef<HTMLVideoElement>(null);
+    const withRef = useRef<HTMLVideoElement>(null);
+
+    // Auto-flip every 3.5 seconds for dynamic feel
+    useEffect(() => {
+        flipIntervalRef.current = setInterval(() => {
+            setIsFlipped((prev) => !prev);
+        }, 3500);
+        return () => clearInterval(flipIntervalRef.current);
+    }, []);
+
+    // Eagerly play both videos
+    useEffect(() => {
+        withoutRef.current?.play().catch(() => {});
+        withRef.current?.play().catch(() => {});
+    }, []);
+
+    // Position the card intelligently based on hotspot location
+    // Keep it within viewport bounds
+    const cardWidth = 420;
+    const cardHeight = 280;
+    const margin = 24;
+
+    const computedStyle = useMemo(() => {
+        const vw = typeof window !== "undefined" ? window.innerWidth : 1920;
+        const vh = typeof window !== "undefined" ? window.innerHeight : 1080;
+
+        let left = anchorPosition.x;
+        let top = anchorPosition.y - cardHeight - margin;
+
+        // If it goes above viewport, place below
+        if (top < margin) {
+            top = anchorPosition.y + margin;
+        }
+        // If it goes off right edge
+        if (left + cardWidth / 2 > vw - margin) {
+            left = vw - margin - cardWidth / 2;
+        }
+        // If it goes off left edge
+        if (left - cardWidth / 2 < margin) {
+            left = margin + cardWidth / 2;
+        }
+
+        return { left, top };
+    }, [anchorPosition, cardHeight]);
+
+    return (
+        <motion.div
+            className="fixed z-[95] pointer-events-none"
+            style={{
+                left: computedStyle.left,
+                top: computedStyle.top,
+                transform: "translateX(-50%)",
+                width: cardWidth,
+                perspective: 1200,
+            }}
+            initial={{ opacity: 0, y: 20, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.92 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        >
+            {/* Card container with 3D flip */}
+            <div
+                style={{
+                    width: "100%",
+                    height: cardHeight,
+                    position: "relative",
+                    transformStyle: "preserve-3d",
+                    transition: "transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1)",
+                    transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                }}
+            >
+                {/* ── Front Face: Without AI ── */}
+                <div
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        backfaceVisibility: "hidden",
+                        borderRadius: 20,
+                        overflow: "hidden",
+                        boxShadow:
+                            "0 24px 64px rgba(0,0,0,0.35), 0 0 40px rgba(200,146,60,0.12), inset 0 1px 0 rgba(255,255,255,0.1)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                    }}
+                >
+                    <video
+                        ref={withoutRef}
+                        src={hotspot.withoutAi}
+                        muted
+                        loop
+                        playsInline
+                        preload="auto"
+                        className="w-full h-full object-cover"
+                    />
+                    {/* Gradient overlay for legibility */}
+                    <div
+                        className="absolute inset-0"
+                        style={{
+                            background:
+                                "linear-gradient(to top, rgba(30,15,8,0.85) 0%, rgba(30,15,8,0.3) 40%, transparent 70%)",
+                        }}
+                    />
+                    {/* Label badge */}
+                    <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-xl"
+                        style={{
+                            background: "rgba(224,82,82,0.88)",
+                            backdropFilter: "blur(8px)",
+                            boxShadow: "0 4px 16px rgba(224,82,82,0.3)",
+                        }}
+                    >
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        <span className="text-[10px] tracking-[0.15em] font-bold text-white uppercase">
+                            Without AI
+                        </span>
+                    </div>
+                    {/* Bottom text */}
+                    <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
+                        <p className="text-[11px] tracking-[0.15em] font-semibold uppercase text-[#FFA07A] mb-1">
+                            {hotspot.emoji} {hotspot.label}
+                        </p>
+                        <p className="text-[10px] tracking-wider text-white/70 leading-snug">
+                            {hotspot.description}
+                        </p>
+                    </div>
+                    {/* Flip indicator */}
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
+                        style={{
+                            background: "rgba(0,0,0,0.4)",
+                            backdropFilter: "blur(8px)",
+                        }}
+                    >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                            <path d="M16 3h5v5" />
+                            <path d="M21 3L9 15" />
+                            <path d="M8 21H3v-5" />
+                            <path d="M3 21l12-12" />
+                        </svg>
+                        <span className="text-[8px] tracking-[0.2em] text-white/80 uppercase">Auto-flip</span>
+                    </div>
+                </div>
+
+                {/* ── Back Face: With AI ── */}
+                <div
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        backfaceVisibility: "hidden",
+                        borderRadius: 20,
+                        overflow: "hidden",
+                        transform: "rotateY(180deg)",
+                        boxShadow:
+                            "0 24px 64px rgba(0,0,0,0.35), 0 0 40px rgba(200,146,60,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
+                        border: "1px solid rgba(200,146,60,0.25)",
+                    }}
+                >
+                    <video
+                        ref={withRef}
+                        src={hotspot.withAi}
+                        muted
+                        loop
+                        playsInline
+                        preload="auto"
+                        className="w-full h-full object-cover"
+                    />
+                    {/* Gradient overlay */}
+                    <div
+                        className="absolute inset-0"
+                        style={{
+                            background:
+                                "linear-gradient(to top, rgba(20,35,10,0.85) 0%, rgba(20,35,10,0.3) 40%, transparent 70%)",
+                        }}
+                    />
+                    {/* Label badge */}
+                    <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-xl"
+                        style={{
+                            background: "rgba(200,146,60,0.92)",
+                            backdropFilter: "blur(8px)",
+                            boxShadow: "0 4px 16px rgba(200,146,60,0.3)",
+                        }}
+                    >
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        <span className="text-[10px] tracking-[0.15em] font-bold text-white uppercase">
+                            Ministros AI
+                        </span>
+                    </div>
+                    {/* Bottom text */}
+                    <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
+                        <p className="text-[11px] tracking-[0.15em] font-semibold uppercase text-[#DEB664] mb-1">
+                            {hotspot.emoji} {hotspot.label}
+                        </p>
+                        <p className="text-[10px] tracking-wider text-white/70 leading-snug">
+                            AI-powered experience — faster resolution, higher satisfaction.
+                        </p>
+                    </div>
+                    {/* Flip indicator */}
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
+                        style={{
+                            background: "rgba(0,0,0,0.4)",
+                            backdropFilter: "blur(8px)",
+                        }}
+                    >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#DEB664" strokeWidth="2" strokeLinecap="round">
+                            <path d="M16 3h5v5" />
+                            <path d="M21 3L9 15" />
+                            <path d="M8 21H3v-5" />
+                            <path d="M3 21l12-12" />
+                        </svg>
+                        <span className="text-[8px] tracking-[0.2em] text-[#DEB664]/80 uppercase">Auto-flip</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Click hint below card */}
+            <motion.div
+                className="flex items-center justify-center gap-2 mt-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+            >
+                <div
+                    className="px-4 py-2 rounded-xl flex items-center gap-2"
+                    style={{
+                        background: "rgba(255,253,245,0.92)",
+                        backdropFilter: "blur(12px)",
+                        border: "1px solid rgba(200,146,60,0.2)",
+                        boxShadow: "0 8px 32px rgba(61,46,26,0.15)",
+                    }}
+                >
+                    <span className="text-[9px] tracking-[0.2em] text-[#C8923C] uppercase font-semibold">
+                        Click to explore full comparison →
+                    </span>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+}
+
 // ─── Main Hero Section ────────────────────────────────────────────────────────
 export default function HeroSection() {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -57,15 +301,19 @@ export default function HeroSection() {
     const [activeHotspot, setActiveHotspot] = useState<HotspotId | null>(null);
     const [hoveredHotspot, setHoveredHotspot] = useState<HotspotId | null>(null);
     const [videoReady, setVideoReady] = useState(false);
-    const [mouse, setMouse] = useState({ x: 0, y: 0 });
+    const [hotspotAnchors, setHotspotAnchors] = useState<Record<string, { x: number; y: number }>>({});
 
-    // Track mouse position globally
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            setMouse({ x: e.clientX, y: e.clientY });
-        };
-        window.addEventListener("mousemove", handleMouseMove, { passive: true });
-        return () => window.removeEventListener("mousemove", handleMouseMove);
+    // Track the center position of each hotspot button for anchoring the flip card
+    const hotspotRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+    const updateAnchorPosition = useCallback((id: string) => {
+        const el = hotspotRefs.current[id];
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        setHotspotAnchors((prev) => ({
+            ...prev,
+            [id]: { x: rect.left + rect.width / 2, y: rect.top },
+        }));
     }, []);
 
     const handleActivate = useCallback((id: HotspotId) => {
@@ -99,6 +347,25 @@ export default function HeroSection() {
         []
     );
 
+    // ── Eagerly preload ALL scenario demo videos ───────────────────────────────
+    useEffect(() => {
+        HOTSPOTS.forEach((h) => {
+            // Preload "without AI" video
+            const linkWithout = document.createElement("link");
+            linkWithout.rel = "preload";
+            linkWithout.as = "video";
+            linkWithout.href = h.withoutAi;
+            document.head.appendChild(linkWithout);
+
+            // Preload "with AI" video
+            const linkWith = document.createElement("link");
+            linkWith.rel = "preload";
+            linkWith.as = "video";
+            linkWith.href = h.withAi;
+            document.head.appendChild(linkWith);
+        });
+    }, []);
+
     return (
         <section
             ref={sectionRef}
@@ -121,6 +388,10 @@ export default function HeroSection() {
                     preload="auto"
                     onCanPlay={() => setVideoReady(true)}
                     className="w-full h-full object-cover object-center"
+                    style={{
+                        willChange: "transform",
+                        transform: "translateZ(0)",
+                    }}
                     // @ts-expect-error -- fetchPriority is valid on video in modern browsers
                     fetchPriority="high"
                 />
@@ -150,11 +421,15 @@ export default function HeroSection() {
                     >
                         {/* Large invisible hit zone covering the building area */}
                         <button
+                            ref={(el) => { hotspotRefs.current[h.id] = el; }}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleActivate(h.id);
                             }}
-                            onMouseEnter={() => setHoveredHotspot(h.id)}
+                            onMouseEnter={() => {
+                                setHoveredHotspot(h.id);
+                                updateAnchorPosition(h.id);
+                            }}
                             onMouseLeave={() => setHoveredHotspot(null)}
                             className="relative rounded-full cursor-pointer"
                             style={{
@@ -168,65 +443,14 @@ export default function HeroSection() {
                 ))}
             </div>
 
-            {/* ── Cursor Glow + Proximity Label ─────────────────────────── */}
+            {/* ── Flip Card Video Preview on Hover ────────────────────────── */}
             <AnimatePresence>
-                {hoveredData && (
-                    <>
-                        {/* Warm radial glow around cursor */}
-                        <motion.div
-                            className="fixed pointer-events-none z-[90]"
-                            style={{
-                                left: mouse.x,
-                                top: mouse.y,
-                                transform: "translate(-50%, -50%)",
-                            }}
-                            initial={{ opacity: 0, scale: 0.3 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.3 }}
-                            transition={{ duration: 0.25, ease: "easeOut" }}
-                        >
-                            <div
-                                className="w-28 h-28 rounded-full"
-                                style={{
-                                    background: "radial-gradient(circle, rgba(200,146,60,0.30) 0%, rgba(222,182,100,0.15) 40%, transparent 70%)",
-                                    filter: "blur(2px)",
-                                }}
-                            />
-                        </motion.div>
-
-                        {/* Floating info text near cursor */}
-                        <motion.div
-                            className="fixed pointer-events-none z-[100]"
-                            style={{
-                                left: mouse.x + 22,
-                                top: mouse.y + 22,
-                            }}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 8 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
-                        >
-                            <div
-                                className="px-4 py-2.5 rounded-xl max-w-[220px]"
-                                style={{
-                                    background: "rgba(255,253,245,0.92)",
-                                    backdropFilter: "blur(12px)",
-                                    border: "1px solid rgba(200,146,60,0.18)",
-                                    boxShadow: "0 8px 32px rgba(61,46,26,0.12), 0 0 20px rgba(200,146,60,0.08)",
-                                }}
-                            >
-                                <p className="text-[11px] tracking-[0.15em] font-semibold uppercase text-[#C8923C] mb-0.5">
-                                    {hoveredData.label}
-                                </p>
-                                <p className="text-[10px] tracking-wider text-[#8B7355] leading-snug">
-                                    {hoveredData.description}
-                                </p>
-                                <p className="text-[9px] tracking-[0.2em] text-[#B8A080] mt-1.5 uppercase">
-                                    Click to explore →
-                                </p>
-                            </div>
-                        </motion.div>
-                    </>
+                {hoveredData && hotspotAnchors[hoveredData.id] && (
+                    <FlipCardPreview
+                        key={hoveredData.id}
+                        hotspot={hoveredData}
+                        anchorPosition={hotspotAnchors[hoveredData.id]}
+                    />
                 )}
             </AnimatePresence>
 

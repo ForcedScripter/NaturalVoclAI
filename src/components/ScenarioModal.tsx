@@ -169,7 +169,8 @@ export default function ScenarioModal({ isOpen, onClose, scenario }: ScenarioMod
                                 alt={`${scenario.title} - Without AI`}
                                 className="w-full h-auto block"
                                 draggable={false}
-                                loading="lazy"
+                                loading="eager"
+                                fetchPriority="high"
                             />
 
                             {/* With AI (overlay with clip/reveal) */}
@@ -185,7 +186,8 @@ export default function ScenarioModal({ isOpen, onClose, scenario }: ScenarioMod
                                     alt={`${scenario.title} - With Ministros AI`}
                                     className="w-full h-auto block"
                                     draggable={false}
-                                    loading="lazy"
+                                    loading="eager"
+                                    fetchPriority="high"
                                 />
                             </div>
 

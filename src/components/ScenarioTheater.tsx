@@ -98,6 +98,9 @@ function ComparisonSlider({
                     playsInline
                     preload="auto"
                     className="w-full h-full object-cover"
+                    style={{ willChange: "transform", transform: "translateZ(0)" }}
+                    // @ts-expect-error -- fetchPriority is valid on video in modern browsers
+                    fetchPriority="high"
                 />
                 {/* Red tint overlay for "without" side */}
                 <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 to-transparent pointer-events-none" />
@@ -116,6 +119,9 @@ function ComparisonSlider({
                     playsInline
                     preload="auto"
                     className="w-full h-full object-cover"
+                    style={{ willChange: "transform", transform: "translateZ(0)" }}
+                    // @ts-expect-error -- fetchPriority is valid on video in modern browsers
+                    fetchPriority="high"
                 />
                 {/* Green tint overlay for "with" side */}
                 <div className="absolute inset-0 bg-gradient-to-bl from-emerald-900/10 to-transparent pointer-events-none" />
