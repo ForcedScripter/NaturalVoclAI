@@ -653,8 +653,8 @@ export default function InsightsPage() {
             <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
                 {ARTICLES.map((article, i) => (
                     <InsightSection key={article.id} article={article} isEven={i % 2 === 0} />
-                ))}
-            </div>
+                    ))}
+                </div>
 
             {/* Footer CTA */}
             <motion.section
@@ -686,7 +686,7 @@ export default function InsightsPage() {
                             Share Feedback
                         </Link>
                     </div>
-                </div>
+            </div>
             </motion.section>
         </main>
     );
