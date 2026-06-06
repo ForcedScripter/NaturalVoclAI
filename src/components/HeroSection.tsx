@@ -46,6 +46,91 @@ const HOTSPOTS = [
 
 type HotspotId = (typeof HOTSPOTS)[number]["id"];
 
+const BEACON_COLORS: Record<
+    HotspotId,
+    { primary: string; light: string; glow: string; ring: string }
+> = {
+    return: {
+        primary: "#D9734A",
+        light: "#F0A07A",
+        glow: "rgba(217,115,74,0.45)",
+        ring: "rgba(217,115,74,0.55)",
+    },
+    service: {
+        primary: "#C8923C",
+        light: "#DEB664",
+        glow: "rgba(200,146,60,0.45)",
+        ring: "rgba(200,146,60,0.55)",
+    },
+    hotel: {
+        primary: "#5E8B7E",
+        light: "#8FB8AA",
+        glow: "rgba(94,139,126,0.45)",
+        ring: "rgba(94,139,126,0.55)",
+    },
+};
+
+// ─── Persistent building beacons (discoverability) ─────────────────────────────
+function ScenarioBeacon({
+    isSpotlight,
+    colors,
+}: {
+    isSpotlight: boolean;
+    colors: (typeof BEACON_COLORS)[HotspotId];
+}) {
+    return (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {/* Ripple rings — compact */}
+            {[0, 1, 2].map((i) => (
+                <motion.span
+                    key={i}
+                    className="absolute rounded-full border-2"
+                    style={{
+                        width: "28%",
+                        height: "28%",
+                        borderColor: colors.ring,
+                    }}
+                    animate={{
+                        scale: isSpotlight ? [1, 1.28, 1] : [1, 1.18, 1],
+                        opacity: isSpotlight ? [0.6, 0, 0.6] : [0.4, 0, 0.4],
+                    }}
+                    transition={{
+                        duration: isSpotlight ? 2.2 : 3,
+                        repeat: Infinity,
+                        delay: i * 0.55,
+                        ease: "easeOut",
+                    }}
+                />
+            ))}
+
+            {/* Core glow */}
+            <motion.div
+                className="absolute w-[20%] h-[20%] min-w-[16px] min-h-[16px] rounded-full blur-sm"
+                style={{ backgroundColor: colors.glow }}
+                animate={{
+                    scale: isSpotlight ? [1, 1.25, 1] : [1, 1.12, 1],
+                    opacity: isSpotlight ? [0.75, 1, 0.75] : [0.5, 0.7, 0.5],
+                }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+
+            {/* Pin dot */}
+            <motion.div
+                className={`relative z-10 rounded-full ${isSpotlight ? "w-5 h-5" : "w-4 h-4"}`}
+                style={{
+                    background: `linear-gradient(to bottom right, ${colors.light}, ${colors.primary})`,
+                    boxShadow: `0 0 16px ${colors.glow}`,
+                    outline: isSpotlight
+                        ? `3px solid ${colors.ring}`
+                        : `2px solid ${colors.ring}`,
+                }}
+                animate={{ y: isSpotlight ? [-2, 2, -2] : [-1, 1, -1] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            />
+        </div>
+    );
+}
+
 // ─── Flip Card Video Preview ──────────────────────────────────────────────────
 // Shows a premium flip-card near the hotspot: front = "Without AI", back = "With AI"
 function FlipCardPreview({
@@ -74,10 +159,13 @@ function FlipCardPreview({
         withRef.current?.play().catch(() => {});
     }, []);
 
-    // Position the card intelligently based on hotspot location
-    // Keep it within viewport bounds
-    const cardWidth = 420;
-    const cardHeight = 280;
+    // Card layout: 16:9 media + footer + click hint (kept inside viewport)
+    const cardWidth = typeof window !== "undefined" && window.innerWidth < 640 ? Math.min(340, window.innerWidth - 32) : 420;
+    const videoHeight = cardWidth * (9 / 16);
+    const footerHeight = 68;
+    const clickHintHeight = 44;
+    const cardStackHeight = videoHeight + footerHeight;
+    const totalHeight = cardStackHeight + clickHintHeight;
     const margin = 24;
 
     const computedStyle = useMemo(() => {
@@ -85,23 +173,25 @@ function FlipCardPreview({
         const vh = typeof window !== "undefined" ? window.innerHeight : 1080;
 
         let left = anchorPosition.x;
-        let top = anchorPosition.y - cardHeight - margin;
+        // Prefer above hotspot; fall back below if needed
+        let top = anchorPosition.y - totalHeight - margin;
 
-        // If it goes above viewport, place below
         if (top < margin) {
             top = anchorPosition.y + margin;
         }
-        // If it goes off right edge
+        // Clamp so card + hint never clip at bottom (avoids overlapping hero copy)
+        if (top + totalHeight > vh - margin) {
+            top = Math.max(margin, vh - margin - totalHeight);
+        }
         if (left + cardWidth / 2 > vw - margin) {
             left = vw - margin - cardWidth / 2;
         }
-        // If it goes off left edge
         if (left - cardWidth / 2 < margin) {
             left = margin + cardWidth / 2;
         }
 
-        return { left, top };
-    }, [anchorPosition, cardHeight]);
+        return { left, top, cardWidth, videoHeight, footerHeight, cardStackHeight };
+    }, [anchorPosition, cardWidth, totalHeight, clickHintHeight]);
 
     return (
         <motion.div
@@ -110,7 +200,7 @@ function FlipCardPreview({
                 left: computedStyle.left,
                 top: computedStyle.top,
                 transform: "translateX(-50%)",
-                width: cardWidth,
+                width: computedStyle.cardWidth,
                 perspective: 1200,
             }}
             initial={{ opacity: 0, y: 20, scale: 0.92 }}
@@ -118,154 +208,136 @@ function FlipCardPreview({
             exit={{ opacity: 0, y: 20, scale: 0.92 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         >
-            {/* Card container with 3D flip */}
+            {/* Card: media frame (flip) + fixed footer (never clipped) */}
             <div
+                className="rounded-[20px] overflow-hidden"
                 style={{
-                    width: "100%",
-                    height: cardHeight,
-                    position: "relative",
-                    transformStyle: "preserve-3d",
-                    transition: "transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1)",
-                    transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                    boxShadow:
+                        "0 24px 64px rgba(0,0,0,0.35), 0 0 40px rgba(200,146,60,0.12)",
+                    border: "1px solid rgba(255,255,255,0.12)",
                 }}
             >
-                {/* ── Front Face: Without AI ── */}
                 <div
                     style={{
-                        position: "absolute",
-                        inset: 0,
-                        backfaceVisibility: "hidden",
-                        borderRadius: 20,
-                        overflow: "hidden",
-                        boxShadow:
-                            "0 24px 64px rgba(0,0,0,0.35), 0 0 40px rgba(200,146,60,0.12), inset 0 1px 0 rgba(255,255,255,0.1)",
-                        border: "1px solid rgba(255,255,255,0.12)",
+                        width: "100%",
+                        height: computedStyle.videoHeight,
+                        position: "relative",
+                        transformStyle: "preserve-3d",
+                        transition: "transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1)",
+                        transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
                     }}
                 >
-                    <video
-                        ref={withoutRef}
-                        src={hotspot.withoutAi}
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                        className="w-full h-full object-cover"
-                    />
-                    {/* Gradient overlay for legibility */}
+                    {/* ── Front Face: Without AI ── */}
                     <div
-                        className="absolute inset-0"
+                        className="absolute inset-0 bg-[#1a1410]"
                         style={{
-                            background:
-                                "linear-gradient(to top, rgba(30,15,8,0.85) 0%, rgba(30,15,8,0.3) 40%, transparent 70%)",
-                        }}
-                    />
-                    {/* Label badge */}
-                    <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-xl"
-                        style={{
-                            background: "rgba(224,82,82,0.88)",
-                            backdropFilter: "blur(8px)",
-                            boxShadow: "0 4px 16px rgba(224,82,82,0.3)",
+                            backfaceVisibility: "hidden",
                         }}
                     >
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                        <span className="text-[10px] tracking-[0.15em] font-bold text-white uppercase">
-                            Without AI
-                        </span>
+                        <video
+                            ref={withoutRef}
+                            src={hotspot.withoutAi}
+                            muted
+                            loop
+                            playsInline
+                            preload="auto"
+                            className="w-full h-full object-contain"
+                        />
+                        <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-xl pointer-events-none"
+                            style={{
+                                background: "rgba(224,82,82,0.88)",
+                                backdropFilter: "blur(8px)",
+                                boxShadow: "0 4px 16px rgba(224,82,82,0.3)",
+                            }}
+                        >
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                            <span className="text-[10px] tracking-[0.15em] font-bold text-white uppercase">
+                                Without AI
+                            </span>
+                        </div>
+                        <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg pointer-events-none"
+                            style={{
+                                background: "rgba(0,0,0,0.4)",
+                                backdropFilter: "blur(8px)",
+                            }}
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                                <path d="M16 3h5v5" />
+                                <path d="M21 3L9 15" />
+                                <path d="M8 21H3v-5" />
+                                <path d="M3 21l12-12" />
+                            </svg>
+                            <span className="text-[8px] tracking-[0.2em] text-white/80 uppercase">Auto-flip</span>
+                        </div>
                     </div>
-                    {/* Bottom text */}
-                    <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
-                        <p className="text-[11px] tracking-[0.15em] font-semibold uppercase text-[#FFA07A] mb-1">
-                            {hotspot.emoji} {hotspot.label}
-                        </p>
-                        <p className="text-[10px] tracking-wider text-white/70 leading-snug">
-                            {hotspot.description}
-                        </p>
-                    </div>
-                    {/* Flip indicator */}
-                    <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
+
+                    {/* ── Back Face: With AI ── */}
+                    <div
+                        className="absolute inset-0 bg-[#141a10]"
                         style={{
-                            background: "rgba(0,0,0,0.4)",
-                            backdropFilter: "blur(8px)",
+                            backfaceVisibility: "hidden",
+                            transform: "rotateY(180deg)",
                         }}
                     >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
-                            <path d="M16 3h5v5" />
-                            <path d="M21 3L9 15" />
-                            <path d="M8 21H3v-5" />
-                            <path d="M3 21l12-12" />
-                        </svg>
-                        <span className="text-[8px] tracking-[0.2em] text-white/80 uppercase">Auto-flip</span>
+                        <video
+                            ref={withRef}
+                            src={hotspot.withAi}
+                            muted
+                            loop
+                            playsInline
+                            preload="auto"
+                            className="w-full h-full object-contain"
+                        />
+                        <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-xl pointer-events-none"
+                            style={{
+                                background: "rgba(200,146,60,0.92)",
+                                backdropFilter: "blur(8px)",
+                                boxShadow: "0 4px 16px rgba(200,146,60,0.3)",
+                            }}
+                        >
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                            <span className="text-[10px] tracking-[0.15em] font-bold text-white uppercase">
+                                Ministros AI
+                            </span>
+                        </div>
+                        <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg pointer-events-none"
+                            style={{
+                                background: "rgba(0,0,0,0.4)",
+                                backdropFilter: "blur(8px)",
+                            }}
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#DEB664" strokeWidth="2" strokeLinecap="round">
+                                <path d="M16 3h5v5" />
+                                <path d="M21 3L9 15" />
+                                <path d="M8 21H3v-5" />
+                                <path d="M3 21l12-12" />
+                            </svg>
+                            <span className="text-[8px] tracking-[0.2em] text-[#DEB664]/80 uppercase">Auto-flip</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* ── Back Face: With AI ── */}
+                {/* Footer below video — always visible, not cropped by overflow */}
                 <div
+                    className="px-4 py-3 border-t border-white/10"
                     style={{
-                        position: "absolute",
-                        inset: 0,
-                        backfaceVisibility: "hidden",
-                        borderRadius: 20,
-                        overflow: "hidden",
-                        transform: "rotateY(180deg)",
-                        boxShadow:
-                            "0 24px 64px rgba(0,0,0,0.35), 0 0 40px rgba(200,146,60,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-                        border: "1px solid rgba(200,146,60,0.25)",
+                        height: computedStyle.footerHeight,
+                        background: isFlipped
+                            ? "linear-gradient(to right, #2a2418, #1f1a12)"
+                            : "linear-gradient(to right, #2a1810, #1f120c)",
                     }}
                 >
-                    <video
-                        ref={withRef}
-                        src={hotspot.withAi}
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                        className="w-full h-full object-cover"
-                    />
-                    {/* Gradient overlay */}
-                    <div
-                        className="absolute inset-0"
-                        style={{
-                            background:
-                                "linear-gradient(to top, rgba(20,35,10,0.85) 0%, rgba(20,35,10,0.3) 40%, transparent 70%)",
-                        }}
-                    />
-                    {/* Label badge */}
-                    <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-xl"
-                        style={{
-                            background: "rgba(200,146,60,0.92)",
-                            backdropFilter: "blur(8px)",
-                            boxShadow: "0 4px 16px rgba(200,146,60,0.3)",
-                        }}
+                    <p
+                        className="text-[11px] tracking-[0.15em] font-semibold uppercase mb-1"
+                        style={{ color: isFlipped ? "#DEB664" : "#FFA07A" }}
                     >
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                        <span className="text-[10px] tracking-[0.15em] font-bold text-white uppercase">
-                            Ministros AI
-                        </span>
-                    </div>
-                    {/* Bottom text */}
-                    <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
-                        <p className="text-[11px] tracking-[0.15em] font-semibold uppercase text-[#DEB664] mb-1">
-                            {hotspot.emoji} {hotspot.label}
-                        </p>
-                        <p className="text-[10px] tracking-wider text-white/70 leading-snug">
-                            AI-powered experience — faster resolution, higher satisfaction.
-                        </p>
-                    </div>
-                    {/* Flip indicator */}
-                    <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
-                        style={{
-                            background: "rgba(0,0,0,0.4)",
-                            backdropFilter: "blur(8px)",
-                        }}
-                    >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#DEB664" strokeWidth="2" strokeLinecap="round">
-                            <path d="M16 3h5v5" />
-                            <path d="M21 3L9 15" />
-                            <path d="M8 21H3v-5" />
-                            <path d="M3 21l12-12" />
-                        </svg>
-                        <span className="text-[8px] tracking-[0.2em] text-[#DEB664]/80 uppercase">Auto-flip</span>
-                    </div>
+                        {hotspot.emoji} {hotspot.label}
+                    </p>
+                    <p className="text-[10px] tracking-wider text-white/75 leading-snug line-clamp-2">
+                        {isFlipped
+                            ? "AI-powered experience — faster resolution, higher satisfaction."
+                            : hotspot.description}
+                    </p>
                 </div>
             </div>
 
@@ -302,9 +374,21 @@ export default function HeroSection() {
     const [hoveredHotspot, setHoveredHotspot] = useState<HotspotId | null>(null);
     const [videoReady, setVideoReady] = useState(false);
     const [hotspotAnchors, setHotspotAnchors] = useState<Record<string, { x: number; y: number }>>({});
+    const [spotlightId, setSpotlightId] = useState<HotspotId>("return");
 
     // Track the center position of each hotspot button for anchoring the flip card
     const hotspotRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+    const updateAllAnchors = useCallback(() => {
+        const next: Record<string, { x: number; y: number }> = {};
+        HOTSPOTS.forEach((h) => {
+            const el = hotspotRefs.current[h.id];
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            next[h.id] = { x: rect.left + rect.width / 2, y: rect.top };
+        });
+        if (Object.keys(next).length) setHotspotAnchors((prev) => ({ ...prev, ...next }));
+    }, []);
 
     const updateAnchorPosition = useCallback((id: string) => {
         const el = hotspotRefs.current[id];
@@ -315,6 +399,26 @@ export default function HeroSection() {
             [id]: { x: rect.left + rect.width / 2, y: rect.top },
         }));
     }, []);
+
+    // Auto-cycle spotlight across buildings when user isn't interacting
+    useEffect(() => {
+        if (hoveredHotspot || activeHotspot) return;
+
+        const interval = setInterval(() => {
+            setSpotlightId((prev) => {
+                const idx = HOTSPOTS.findIndex((h) => h.id === prev);
+                return HOTSPOTS[(idx + 1) % HOTSPOTS.length].id;
+            });
+        }, 4200);
+
+        return () => clearInterval(interval);
+    }, [hoveredHotspot, activeHotspot]);
+
+    useEffect(() => {
+        updateAllAnchors();
+        window.addEventListener("resize", updateAllAnchors);
+        return () => window.removeEventListener("resize", updateAllAnchors);
+    }, [updateAllAnchors, videoReady]);
 
     const handleActivate = useCallback((id: HotspotId) => {
         setActiveHotspot(id);
@@ -419,6 +523,23 @@ export default function HeroSection() {
                             transform: "translate(-50%, -50%)",
                         }}
                     >
+                        {/* Discoverability beacons — hidden while preview or theater is open */}
+                        <AnimatePresence>
+                            {!hoveredHotspot && !activeHotspot && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <ScenarioBeacon
+                                        isSpotlight={spotlightId === h.id}
+                                        colors={BEACON_COLORS[h.id]}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                         {/* Large invisible hit zone covering the building area */}
                         <button
                             ref={(el) => { hotspotRefs.current[h.id] = el; }}
@@ -428,10 +549,11 @@ export default function HeroSection() {
                             }}
                             onMouseEnter={() => {
                                 setHoveredHotspot(h.id);
+                                setSpotlightId(h.id);
                                 updateAnchorPosition(h.id);
                             }}
                             onMouseLeave={() => setHoveredHotspot(null)}
-                            className="relative rounded-full cursor-pointer"
+                            className="relative z-10 rounded-full cursor-pointer"
                             style={{
                                 width: h.zoneWidth,
                                 height: h.zoneHeight,
@@ -454,90 +576,41 @@ export default function HeroSection() {
                 )}
             </AnimatePresence>
 
-            {/* ── Hint text ────────────────────────────────────────────── */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.8, duration: 1 }}
-                className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 pointer-events-none"
-            >
-                <span className="text-[9px] tracking-[0.3em] text-[#8B7355] uppercase">
-                    Hover the scene to discover scenarios
-                </span>
-            </motion.div>
-
-            {/* ── Title text ───────────────────────────────────────────── */}
-            <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 pointer-events-none">
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
-                    className="text-center"
-                >
-                    {/* Sound bars */}
+            {/* ── Hero tagline — four-road intersection (center of scene) ─── */}
+            <AnimatePresence>
+                {!hoveredHotspot && !activeHotspot && (
                     <motion.div
-                        className="flex items-end justify-center gap-[3px] mb-6"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.6, duration: 0.8 }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        transition={{ duration: 0.55, ease: "easeOut", delay: 0.45 }}
+                        className="absolute top-[78%] md:top-[73%] left-[51.5%] -translate-x-1/2 -translate-y-1/2 z-[15] pointer-events-none"
                     >
-                        {[...Array(7)].map((_, i) => (
-                            <motion.div
-                                key={i}
-                                className="w-[2px] rounded-full bg-gradient-to-t from-[#C8923C]/60 to-[#DEB664]"
-                                animate={{ height: [6, 14 + Math.abs(i - 3) * 5, 6] }}
-                                transition={{
-                                    duration: 1 + (i % 3) * 0.3,
-                                    repeat: Infinity,
-                                    delay: i * 0.12,
-                                    ease: "easeInOut",
-                                }}
-                            />
-                        ))}
+                        <div
+                            className="inline-block px-4 py-2.5 md:px-5 md:py-3 rounded-xl border border-[#C8923C]/18 shadow-sm shadow-[#C8923C]/5"
+                            style={{
+                                background: "rgba(255,253,245,0.82)",
+                                backdropFilter: "blur(10px)",
+                            }}
+                        >
+                            <p className="text-[11px] sm:text-xs md:text-sm font-light leading-[1.45] tracking-[0.02em] text-center whitespace-nowrap">
+                                <span className="block text-[#3D2E1A]">
+                                    From{" "}
+                                    <span className="text-[#5C4A32] italic">
+                                        &ldquo;How Can I Help?&rdquo;
+                                    </span>
+                                </span>
+                                <span className="block mt-0.5">
+                                    <span className="text-[#8B7355]">to </span>
+                                    <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-[#A87530] to-[#C8923C]">
+                                        &ldquo;Issue Resolved.&rdquo;
+                                    </span>
+                                </span>
+                            </p>
+                        </div>
                     </motion.div>
-
-                    <motion.h1
-                        className="text-4xl md:text-7xl font-light tracking-[0.15em] md:tracking-[0.3em] text-[#3D2E1A] mb-4 uppercase"
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 1, delay: 0.5 }}
-                        style={{ textShadow: "0 2px 24px rgba(255,253,245,0.9)" }}
-                    >
-                        Speak to the
-                        <br />
-                        <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#C8923C] to-[#DEB664]">
-                            Future
-                        </span>
-                    </motion.h1>
-
-                    <motion.p
-                        className="text-[#6B5A42] text-sm md:text-base tracking-widest max-w-2xl mx-auto leading-relaxed"
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 1, delay: 0.7 }}
-                        style={{ textShadow: "0 1px 10px rgba(255,253,245,0.95)" }}
-                    >
-                        AI VOICE AGENTS THAT TRANSFORM REAL BUSINESSES
-                    </motion.p>
-                </motion.div>
-            </div>
-
-            {/* ── Scroll Indicator ──────────────────────────────────────── */}
-            <motion.div
-                className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 pointer-events-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 2.2, duration: 1 }}
-            >
-                <span className="text-xs text-[#8B7355] tracking-[0.3em] uppercase">
-                    Scroll to explore
-                </span>
-                <motion.div
-                    className="w-[1px] h-10 bg-gradient-to-b from-[#C8923C]/50 to-transparent"
-                    animate={{ scaleY: [0, 1, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                />
-            </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* ── Scenario Theater (full-screen overlay) ────────────────── */}
             <ScenarioTheater

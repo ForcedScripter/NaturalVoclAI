@@ -1,12 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-
-  // ── Suppress the workspace-root lockfile warning ──────────────────────────
-  turbopack: {
-    root: __dirname,
-  },
 
   // ── HTTP caching headers ─────────────────────────────────────────────────
   // Static assets (videos, images, fonts) get 1-year immutable cache.

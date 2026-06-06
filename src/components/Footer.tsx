@@ -123,14 +123,13 @@ const footerLinks = [
         title: "Company",
         links: [
             { label: "About Us", href: "/about" },
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "Community", href: "/community" },
         ],
     },
     {
         title: "Connect",
         links: [
-            { label: "GitHub", href: "https://github.com/v-i-s-h-a-l-l/Customer_Service_AI" },
-            { label: "Contact", href: "#" },
+            { label: "Contact", href: "/contact" },
         ],
     },
 ];
