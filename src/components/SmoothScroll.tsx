@@ -48,8 +48,7 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
     return (
         <ReactLenis root options={LENIS_OPTIONS}>
             <LenisScrollBridge />
-            {/* @ts-expect-error - React 19 type mismatch with Lenis ReactNode */}
-            {children}
+            {children as any}
         </ReactLenis>
     );
 }
