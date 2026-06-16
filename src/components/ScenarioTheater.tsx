@@ -88,8 +88,8 @@ function ComparisonSlider({
             onPointerUp={handlePointerUp}
             style={{ touchAction: "none", cursor: isDragging ? "grabbing" : "col-resize" }}
         >
-            {/* Base layer: WITHOUT AI (full width) */}
-            <div className="absolute inset-0">
+            {/* Base layer: WITHOUT AI (fit inside frame) */}
+            <div className="absolute inset-0 flex items-center justify-center bg-[#1a1410]">
                 <video
                     ref={withoutRef}
                     src={withoutSrc}
@@ -97,7 +97,7 @@ function ComparisonSlider({
                     loop
                     playsInline
                     preload="auto"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     style={{ willChange: "transform", transform: "translateZ(0)" }}
                     // @ts-expect-error -- fetchPriority is valid on video in modern browsers
                     fetchPriority="high"
@@ -108,7 +108,7 @@ function ComparisonSlider({
 
             {/* Overlay layer: WITH AI (clipped) */}
             <div
-                className="absolute inset-0"
+                className="absolute inset-0 flex items-center justify-center bg-[#141a10]"
                 style={{ clipPath: `inset(0 0 0 ${sliderPos}%)` }}
             >
                 <video
@@ -118,7 +118,7 @@ function ComparisonSlider({
                     loop
                     playsInline
                     preload="auto"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     style={{ willChange: "transform", transform: "translateZ(0)" }}
                     // @ts-expect-error -- fetchPriority is valid on video in modern browsers
                     fetchPriority="high"
@@ -338,10 +338,11 @@ export default function ScenarioTheater({
                             initial={{ y: 30, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.15, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                            className="w-full max-w-6xl flex-1 min-h-0 rounded-2xl overflow-hidden"
+                            className="w-full max-w-6xl flex-1 min-h-0 max-h-[min(72vh,820px)] rounded-2xl overflow-hidden bg-[#1a1410]"
                             style={{
                                 boxShadow: "0 32px 100px rgba(0,0,0,0.4), 0 0 60px rgba(200,146,60,0.08)",
                                 border: "1px solid rgba(255,255,255,0.08)",
+                                aspectRatio: "16 / 9",
                             }}
                         >
                             <AnimatePresence mode="wait">
@@ -351,8 +352,7 @@ export default function ScenarioTheater({
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.97 }}
                                     transition={{ duration: 0.3 }}
-                                    className="w-full h-full"
-                                    style={{ aspectRatio: "16/9" }}
+                                    className="w-full h-full min-h-0"
                                 >
                                     <ComparisonSlider
                                         withoutSrc={activeScenario.withoutAi}

@@ -89,6 +89,8 @@ const SECTION_IDS = ["intro", ...PRODUCTS.map((p) => p.id)];
 
 type AnimPhase = "idle" | "enter" | "exit";
 
+/* ─── IntersectionObserver: enter zoom-in / exit zoom-out ──────────────────── */
+
 function useSectionPhase() {
     const ref = useRef<HTMLElement>(null);
     const [phase, setPhase] = useState<AnimPhase>("idle");
@@ -150,6 +152,8 @@ function useActiveSection() {
     return activeId;
 }
 
+/* ─── Shared styles ────────────────────────────────────────────────────────── */
+
 function cardTransform(phase: AnimPhase): React.CSSProperties {
     if (phase === "enter") {
         return {
@@ -179,6 +183,8 @@ function fadeStyle(visible: boolean, delayMs: number): React.CSSProperties {
         transition: `opacity 500ms ${EASE} ${delayMs}ms, transform 500ms ${EASE} ${delayMs}ms`,
     };
 }
+
+/* ─── Dot navigation ───────────────────────────────────────────────────────── */
 
 function DotNav({
     activeId,
@@ -223,6 +229,8 @@ function DotNav({
         </nav>
     );
 }
+
+/* ─── Intro section ────────────────────────────────────────────────────────── */
 
 function IntroSection({ onGo }: { onGo: (id: string) => void }) {
     const { ref, phase, active } = useSectionPhase();
@@ -302,6 +310,8 @@ function IntroSection({ onGo }: { onGo: (id: string) => void }) {
     );
 }
 
+/* ─── Product section ──────────────────────────────────────────────────────── */
+
 function ProductSection({ product }: { product: Product }) {
     const { ref, phase, active } = useSectionPhase();
     const baseDelay = 150;
@@ -314,6 +324,7 @@ function ProductSection({ product }: { product: Product }) {
             style={{ background: product.bg }}
         >
             <div className="flex w-full max-w-lg flex-col items-center text-center">
+                {/* Icon circle — zoom in / out */}
                 <div
                     className="mb-8 flex h-28 w-28 md:h-36 md:w-36 items-center justify-center rounded-full border-2 shadow-lg"
                     style={{
@@ -328,6 +339,7 @@ function ProductSection({ product }: { product: Product }) {
                     </span>
                 </div>
 
+                {/* Text stack — staggered fade after card */}
                 <p
                     style={fadeStyle(active, baseDelay)}
                     className="text-[10px] tracking-[0.28em] uppercase mb-3"
@@ -354,7 +366,10 @@ function ProductSection({ product }: { product: Product }) {
                     {product.badge}
                 </span>
 
-                <div style={fadeStyle(active, baseDelay + 180)} className="w-16 h-px mb-6">
+                <div
+                    style={fadeStyle(active, baseDelay + 180)}
+                    className="w-16 h-px mb-6"
+                >
                     <div
                         className="h-full w-full"
                         style={{
@@ -389,6 +404,8 @@ function ProductSection({ product }: { product: Product }) {
         </section>
     );
 }
+
+/* ─── Page ─────────────────────────────────────────────────────────────────── */
 
 export default function ProductPage() {
     const scrollerRef = useRef<HTMLElement>(null);

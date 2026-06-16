@@ -76,9 +76,18 @@ export default function Navbar() {
         >
             <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
 
-                {/* Logo */}
-                <Link href="/" className="text-xl font-bold tracking-[0.3em] text-[#3D2E1A] hover:text-[#C8923C] transition-colors duration-300">
-                    MINISTROS
+                {/* Logo — square PNG is cropped vertically to the center band; no scale hack */}
+                <Link
+                    href="/"
+                    className="group flex h-[50px] shrink-0 items-center self-center transition-all duration-300"
+                >
+                    <span className="relative block h-[50px] w-[176px] overflow-hidden">
+                        <img
+                            src="/ministros_logo-removebg-preview.png"
+                            alt="MINISTROS"
+                            className="absolute left-0 top-1/2 w-full max-w-none -translate-y-1/2 transition-all duration-300 group-hover:brightness-110 group-hover:saturate-150 group-hover:drop-shadow-[0_0_14px_rgba(200,146,60,0.55)]"
+                        />
+                    </span>
                 </Link>
 
                 {/* Mobile menu button */}
@@ -147,13 +156,13 @@ export default function Navbar() {
                         ABOUT US
                     </Link>
 
-                    {/* Dashboard */}
+                    {/* Community */}
                     <Link
-                        href="/dashboard"
-                        className={`px-4 py-2 text-xs tracking-[0.2em] rounded-lg transition-all duration-300 ${isActive("/dashboard") ? "text-[#3D2E1A] bg-[#C8923C]/10" : "text-[#8B7355] hover:text-[#3D2E1A]"
+                        href="/community"
+                        className={`px-4 py-2 text-xs tracking-[0.2em] rounded-lg transition-all duration-300 ${isActive("/community") ? "text-[#3D2E1A] bg-[#C8923C]/10" : "text-[#8B7355] hover:text-[#3D2E1A]"
                             }`}
                     >
-                        DASHBOARD
+                        COMMUNITY
                     </Link>
                 </div>
 
@@ -242,11 +251,11 @@ export default function Navbar() {
                             </Link>
 
                             <Link
-                                href="/dashboard"
-                                className={`block px-3 py-2 rounded-lg text-xs tracking-[0.2em] transition-all duration-300 ${isActive("/dashboard") ? "text-[#3D2E1A] bg-[#C8923C]/10" : "text-[#8B7355] hover:text-[#3D2E1A] hover:bg-[#C8923C]/5"
+                                href="/community"
+                                className={`block px-3 py-2 rounded-lg text-xs tracking-[0.2em] transition-all duration-300 ${isActive("/community") ? "text-[#3D2E1A] bg-[#C8923C]/10" : "text-[#8B7355] hover:text-[#3D2E1A] hover:bg-[#C8923C]/5"
                                     }`}
                             >
-                                DASHBOARD
+                                COMMUNITY
                             </Link>
 
                             <div className="pt-2 border-t border-[#C8923C]/10">
