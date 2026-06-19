@@ -50,9 +50,19 @@ export default function LiveAudioStreamer() {
     // Conversation log
     const [conversation, setConversation] = useState<ConversationEntry[]>([]);
 
+    // Ref to auto-scroll transcript container
+    const transcriptContainerRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (transcriptContainerRef.current) {
+            transcriptContainerRef.current.scrollTop = transcriptContainerRef.current.scrollHeight;
+        }
+    }, [conversation]);
+
     // Waveform animation
     const [waveformHeights, setWaveformHeights] = useState<number[]>(Array(12).fill(10));
     const animFrameRef = useRef<number | null>(null);
+
 
     const voices = selectedGender === "male" ? MALE_VOICES : FEMALE_VOICES;
 
@@ -294,7 +304,12 @@ export default function LiveAudioStreamer() {
                 </div>
 
                 {/* Live Conversation Transcript */}
-                <div className="mt-6 w-full max-w-md space-y-3">
+                <div 
+                    ref={transcriptContainerRef}
+                    className="mt-6 w-full max-w-md max-h-36 overflow-y-auto pr-1 space-y-3 scrollbar-thin"
+                    style={{ scrollBehavior: "smooth" }}
+                >
+
                     <AnimatePresence initial={false}>
                         {conversation.slice(-6).map((entry, i, arr) => {
                             const isLatest = i === arr.length - 1;
