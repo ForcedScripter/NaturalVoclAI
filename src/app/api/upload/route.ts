@@ -9,8 +9,11 @@ export async function POST(req: NextRequest) {
         headers["Authorization"] = `Bearer ${token}`;
     }
 
+    // Extract user_id from formData to forward as session_id query param
+    const userId = formData.get("user_id") as string || "ws-session";
+
     try {
-        const res = await fetch(`${process.env.BACKEND_URL}/upload`, {
+        const res = await fetch(`${process.env.BACKEND_URL}/upload?session_id=${encodeURIComponent(userId)}`, {
             method: "POST",
             headers,
             body: formData,
@@ -25,3 +28,4 @@ export async function POST(req: NextRequest) {
         );
     }
 }
+

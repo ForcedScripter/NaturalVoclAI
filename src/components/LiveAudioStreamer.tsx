@@ -35,6 +35,13 @@ interface ConversationEntry {
 // ─── Component ────────────────────────────────────────────
 
 export default function LiveAudioStreamer() {
+    // Unique session ID for RAG mapping
+    const [sessionId, setSessionId] = useState<string>("");
+
+    useEffect(() => {
+        setSessionId(crypto.randomUUID());
+    }, []);
+
     // Voice selection
     const [selectedGender, setSelectedGender] = useState<"male" | "female">("female");
     const [selectedVoice, setSelectedVoice] = useState("Kavya");
@@ -75,7 +82,8 @@ export default function LiveAudioStreamer() {
     // ── Voice Agent Hook ──────────────────────────────────
     const { status, error, connect, disconnect } = useVoiceAgent({
         wsUrl,
-        language: "hi-IN",
+        language: "en-IN", // English default
+        sessionId,
         onTranscription: handleTranscription,
         onBotStartedSpeaking: handleBotStarted,
         onBotStoppedSpeaking: handleBotStopped,
@@ -154,9 +162,11 @@ export default function LiveAudioStreamer() {
     }, []);
 
     // Expose user_id for DocumentUploader (backwards compatibility)
-    if (typeof window !== "undefined") {
-        (window as unknown as Record<string, string>).__aura_user_id = "ws-session";
-    }
+    useEffect(() => {
+        if (typeof window !== "undefined" && sessionId) {
+            (window as unknown as Record<string, string>).__aura_user_id = sessionId;
+        }
+    }, [sessionId]);
 
     return (
         <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center bg-[#FFF5DC]/60 border border-[#C8923C]/10 rounded-3xl p-8 backdrop-blur-sm relative overflow-hidden">

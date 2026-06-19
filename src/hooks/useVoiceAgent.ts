@@ -19,6 +19,8 @@ export interface VoiceAgentOptions {
     wsUrl: string;
     /** Language code sent as ?lang= query param */
     language?: string;
+    /** Unique session ID for dynamic RAG mapping */
+    sessionId?: string;
     /** Called on every user transcription from server */
     onTranscription?: (text: string) => void;
     /** Called when the bot starts speaking */
@@ -73,7 +75,7 @@ function float32ToPCM16(float32: Float32Array): ArrayBuffer {
  *   - Race-safe disconnect (flag before cleanup)
  */
 export function useVoiceAgent(options: VoiceAgentOptions): VoiceAgentState {
-    const { wsUrl, language = "hi-IN", onTranscription, onBotStartedSpeaking, onBotStoppedSpeaking, onError } = options;
+    const { wsUrl, language = "hi-IN", sessionId, onTranscription, onBotStartedSpeaking, onBotStoppedSpeaking, onError } = options;
 
     const [status, setStatus] = useState<AgentStatus>("idle");
     const [error, setError] = useState<string | null>(null);
@@ -286,7 +288,9 @@ export function useVoiceAgent(options: VoiceAgentOptions): VoiceAgentState {
             mediaStreamRef.current = stream;
 
             // 2. Open WebSocket
-            const url = `${wsUrl}?lang=${language}`;
+            const url = sessionId 
+                ? `${wsUrl}?session_id=${sessionId}&lang=${language}`
+                : `${wsUrl}?lang=${language}`;
             const ws = new WebSocket(url);
             ws.binaryType = "arraybuffer";
             wsRef.current = ws;
