@@ -28,39 +28,6 @@ export default function CanvasScrollyTelling() {
         offset: ["start start", "end end"],
     });
 
-    // ── Preload ALL frames eagerly into memory ─────────────────────────────────
-    useEffect(() => {
-        let loaded = 0;
-        const images: HTMLImageElement[] = new Array(FRAME_COUNT);
-        let cancelled = false;
-
-        const onLoad = () => {
-            loaded++;
-            if (!cancelled) {
-                setLoadProgress(loaded / FRAME_COUNT);
-            }
-            if (loaded === FRAME_COUNT && !cancelled) {
-                imagesRef.current = images;
-                setReady(true);
-                // Draw the initial frame
-                renderFrame(0);
-            }
-        };
-
-        for (let i = 0; i < FRAME_COUNT; i++) {
-            const img = new Image();
-            img.src = getFrameUrl(i + 1); // frames are 1-indexed
-            img.onload = onLoad;
-            img.onerror = onLoad; // still count errors to avoid stuck progress
-            images[i] = img;
-        }
-
-        return () => {
-            cancelled = true;
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
     // ── Draw a specific frame to the canvas ────────────────────────────────────
     const renderFrame = useCallback((frameIndex: number) => {
         const canvas = canvasRef.current;
@@ -101,6 +68,36 @@ export default function CanvasScrollyTelling() {
         }
 
         ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
+    }, []);
+
+    // ── Preload ALL frames eagerly into memory ─────────────────────────────────
+    useEffect(() => {
+        let loaded = 0;
+        const images: HTMLImageElement[] = new Array(FRAME_COUNT);
+        let cancelled = false;
+
+        const onLoad = () => {
+            loaded++;
+            if (!cancelled) {
+                setLoadProgress(loaded / FRAME_COUNT);
+            }
+            if (loaded === FRAME_COUNT && !cancelled) {
+                imagesRef.current = images;
+                setReady(true);
+            }
+        };
+
+        for (let i = 0; i < FRAME_COUNT; i++) {
+            const img = new Image();
+            img.src = getFrameUrl(i + 1); // frames are 1-indexed
+            img.onload = onLoad;
+            img.onerror = onLoad; // still count errors to avoid stuck progress
+            images[i] = img;
+        }
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     // ── Respond to scroll → pick and render the right frame ────────────────────

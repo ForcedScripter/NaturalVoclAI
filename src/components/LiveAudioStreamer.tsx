@@ -67,7 +67,7 @@ export default function LiveAudioStreamer() {
     const voices = selectedGender === "male" ? MALE_VOICES : FEMALE_VOICES;
 
     // ── WebSocket URL from env ────────────────────────────
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8805/ws";
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8906/ws";
 
     // ── Transcript handler ────────────────────────────────
     const handleTranscription = useCallback((text: string) => {

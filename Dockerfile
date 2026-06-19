@@ -8,6 +8,8 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 
 # Build with production env baked in
+ARG NEXT_PUBLIC_WS_URL
+ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 RUN npm run build
 
 # ── Runtime ──

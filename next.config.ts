@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
 
   // ── HTTP caching headers ─────────────────────────────────────────────────
   // Static assets (videos, images, fonts) get 1-year immutable cache.

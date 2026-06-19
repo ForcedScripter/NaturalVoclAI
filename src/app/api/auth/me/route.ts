@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const JWT_SECRET = process.env.JWT_SECRET || "aura-secret-key-change-in-production";
-
 export async function GET(req: NextRequest) {
     const token = req.cookies.get("aura_token")?.value;
 
