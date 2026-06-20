@@ -2,7 +2,7 @@
 
 Front-end for the **MINISTROS** AI voice agent demo — marketing site, interactive hero scenarios, live voice demo, insights, and community feedback.
 
-**Live demo:** [natural-vocl-ai.vercel.app](https://natural-vocl-ai.vercel.app)  
+**Live demo:** [natural-vocl-ai.vercel.app](www.ministrosai.in)  
 **Repository:** [github.com/ForcedScripter/NaturalVoclAI](https://github.com/ForcedScripter/NaturalVoclAI)
 
 ---
